@@ -1,0 +1,13 @@
+<RCC>
+  <qresource prefix="img">
+    <file>descarga.png</file>
+    <file>fondologin.png</file>
+    <file>logo.png</file>
+  </qresource>
+  <qresource prefix="icons">
+    <file>ojont.png</file>
+    <file>ojo.png</file>
+    <file>lok.png</file>
+    <file>user.png</file>
+  </qresource>
+</RCC>

@@ -1,0 +1,24 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>img/icons/cargar.png</file>
+    <file>img/icons/seguridad2.png</file>
+    <file>img/icons/agregar.png</file>
+    <file>img/icons/becerro.png</file>
+    <file>img/icons/bitacora.png</file>
+    <file>img/icons/cerrar.png</file>
+    <file>img/icons/cerrar2.png</file>
+    <file>img/icons/cow.png</file>
+    <file>img/icons/fence.png</file>
+    <file>img/icons/inicio.png</file>
+    <file>img/icons/logo.png</file>
+    <file>img/icons/menu.png</file>
+    <file>img/icons/Nbecerro.png</file>
+    <file>img/icons/Nbitacora.png</file>
+    <file>img/icons/Ncow.png</file>
+    <file>img/icons/Nfence.png</file>
+    <file>img/icons/Npropietarios.png</file>
+    <file>img/icons/propietarios.png</file>
+    <file>img/icons/reporte.png</file>
+    <file>img/icons/seguridad.png</file>
+  </qresource>
+</RCC>

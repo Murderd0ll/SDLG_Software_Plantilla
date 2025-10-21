@@ -1,0 +1,1066 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>928</width>
+    <height>549</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <item row="0" column="0">
+     <widget class="QWidget" name="icon_only_widget" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="minimumSize">
+            <size>
+             <width>50</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>50</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="../img/icons/resources.qrc">:/icons/logo.png</pixmap>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="indexbtn1">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/inicio.png</normaloff>:/icons/inicio.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="becerrosbtn1">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/becerro.png</normaloff>:/icons/becerro.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="animalesbtn1">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/cow.png</normaloff>:/icons/cow.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="corralesbtn1">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/fence.png</normaloff>:/icons/fence.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="propietariosbtn1">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/propietarios.png</normaloff>:/icons/propietarios.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="bitacorabtn1">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/bitacora.png</normaloff>:/icons/bitacora.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="reportesbtn1">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/reporte.png</normaloff>:/icons/reporte.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="seguridadbtn1">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/seguridad.png</normaloff>:/icons/seguridad.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>240</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="cerrarbtn1">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../img/icons/resources.qrc">
+           <normaloff>:/icons/cerrar.png</normaloff>
+           <normalon>:/icons/cerrar2.png</normalon>:/icons/cerrar.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <property name="autoExclusive">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QWidget" name="full_menu_widget" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="../img/icons/resources.qrc">:/icons/logo.png</pixmap>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="font">
+            <font>
+             <family>Segoe UI Semibold</family>
+             <pointsize>14</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>SDLG</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="indexbtn2">
+           <property name="text">
+            <string>Página principal</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/inicio.png</normaloff>:/icons/inicio.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="becerrosbtn2">
+           <property name="text">
+            <string>Becerros</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/becerro.png</normaloff>:/icons/becerro.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="animalesbtn2">
+           <property name="text">
+            <string>Animales</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/cow.png</normaloff>:/icons/cow.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="corralesbtn2">
+           <property name="text">
+            <string>Corrales</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/fence.png</normaloff>:/icons/fence.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="propietariosbtn2">
+           <property name="text">
+            <string>Propietarios</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/propietarios.png</normaloff>:/icons/propietarios.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="bitacorabtn2">
+           <property name="text">
+            <string>Bitácora</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/bitacora.png</normaloff>:/icons/bitacora.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="reportesbtn2">
+           <property name="text">
+            <string>Reportes</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/reporte.png</normaloff>:/icons/reporte.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="seguridadbtn2">
+           <property name="text">
+            <string>Seguridad</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../img/icons/resources.qrc">
+             <normaloff>:/icons/seguridad.png</normaloff>:/icons/seguridad.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>214</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="cerrarbtn2">
+         <property name="text">
+          <string>Cerrar sesión</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../img/icons/resources.qrc">
+           <normaloff>:/icons/cerrar.png</normaloff>
+           <normalon>:/icons/cerrar2.png</normalon>:/icons/cerrar.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QWidget" name="widget_3" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QWidget" name="widget" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QPushButton" name="menubtn">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../img/icons/resources.qrc">
+              <normaloff>:/icons/menu.png</normaloff>:/icons/menu.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>14</width>
+              <height>14</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>697</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QStackedWidget" name="stackedWidget">
+         <widget class="QWidget" name="page">
+          <widget class="QLabel" name="label_4">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>761</width>
+             <height>481</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Página principal</string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QWidget" name="page_2">
+          <widget class="QLabel" name="label_5">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>761</width>
+             <height>481</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Becerros</string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QWidget" name="page_3">
+          <widget class="QLabel" name="label_6">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>761</width>
+             <height>481</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Animales</string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QWidget" name="page_4">
+          <widget class="QLabel" name="label_7">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>761</width>
+             <height>481</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Corrales</string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QWidget" name="page_5">
+          <widget class="QLabel" name="label_8">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>761</width>
+             <height>481</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Propietarios</string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QWidget" name="page_6">
+          <widget class="QLabel" name="label_9">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>761</width>
+             <height>481</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Bitacora</string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QWidget" name="page_7">
+          <widget class="QLabel" name="label_10">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>761</width>
+             <height>481</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Reportes</string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QWidget" name="page_8">
+          <widget class="QLabel" name="label_11">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>761</width>
+             <height>481</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Seguridad</string>
+           </property>
+          </widget>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources>
+  <include location="../img/icons/resources.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>menubtn</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>icon_only_widget</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>197</x>
+     <y>27</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>36</x>
+     <y>331</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>menubtn</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>full_menu_widget</receiver>
+   <slot>setHidden(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>206</x>
+     <y>19</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>165</x>
+     <y>300</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>indexbtn1</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>indexbtn2</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>39</x>
+     <y>67</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>94</x>
+     <y>79</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>becerrosbtn1</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>becerrosbtn2</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>21</x>
+     <y>99</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>78</x>
+     <y>100</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>animalesbtn1</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>animalesbtn2</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>28</x>
+     <y>118</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>88</x>
+     <y>131</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>corralesbtn1</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>corralesbtn2</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>32</x>
+     <y>143</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>81</x>
+     <y>157</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>propietariosbtn1</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>propietariosbtn2</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>33</x>
+     <y>182</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>76</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bitacorabtn1</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>bitacorabtn2</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>36</x>
+     <y>202</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>76</x>
+     <y>209</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reportesbtn1</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>reportesbtn2</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>237</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>82</x>
+     <y>244</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>seguridadbtn1</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>seguridadbtn2</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>39</x>
+     <y>266</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>85</x>
+     <y>272</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>indexbtn2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>indexbtn1</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>94</x>
+     <y>68</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>40</x>
+     <y>70</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>becerrosbtn2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>becerrosbtn1</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>73</x>
+     <y>95</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>36</x>
+     <y>94</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>animalesbtn2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>animalesbtn1</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>72</x>
+     <y>124</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>34</x>
+     <y>125</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>corralesbtn2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>corralesbtn1</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>148</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>36</x>
+     <y>150</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>propietariosbtn2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>propietariosbtn1</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>85</x>
+     <y>181</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>28</x>
+     <y>179</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bitacorabtn2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>bitacorabtn1</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>97</x>
+     <y>218</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>29</x>
+     <y>217</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reportesbtn2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>reportesbtn1</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>88</x>
+     <y>236</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>42</x>
+     <y>236</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>seguridadbtn2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>seguridadbtn1</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>81</x>
+     <y>257</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>41</x>
+     <y>263</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
