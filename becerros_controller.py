@@ -53,27 +53,29 @@ class BecerrosController:
         if not self.tableWidget:
             print("❌ No hay tableWidget disponible")
             return
-            
+
         try:
             self.tableWidget.setRowCount(0)
-            
+
             for row_number, becerro in enumerate(becerros):
                 self.tableWidget.insertRow(row_number)
-                
+
                 # becerro[0] es el ID, lo saltamos
-                for column_number in range(1, 12):  # Desde arete (1) hasta observacion (11)
+                for column_number in range(1, 13):  # Ahora son 13 columnas incluyendo foto
                     data = becerro[column_number] if column_number < len(becerro) else ""
                     actual_column = column_number - 1  # Ajustar índice
-                    
-                    # Si es la última columna (opciones)
-                    if actual_column == 10:
+
+                    # Si es la columna de foto (índice 11)
+                    if actual_column == 11:
+                        self.agregar_botones_opciones(row_number, actual_column, becerro[0])
+                    elif actual_column == 10:  # Columna de opciones (antes era 10, ahora 11)
                         self.agregar_botones_opciones(row_number, actual_column, becerro[0])
                     else:
                         item = QtWidgets.QTableWidgetItem(str(data) if data is not None else "")
                         self.tableWidget.setItem(row_number, actual_column, item)
-                        
+
             print(f"✅ Tabla llenada con {len(becerros)} registros")
-            
+
         except Exception as e:
             print(f"❌ Error al llenar tabla: {e}")
     
@@ -166,3 +168,28 @@ class BecerrosController:
                 self.llenar_tabla(becerros)
         except Exception as e:
             print(f"❌ Error al buscar becerros: {e}")
+
+    def mostrar_foto_becerro(self, id_becerro):
+        """Muestra la foto de un becerro en un diálogo"""
+        try:
+            foto_data = self.db.obtener_foto_becerro(id_becerro)
+            if foto_data:
+                # Crear un pixmap desde los datos BLOB
+                pixmap = QtGui.QPixmap()
+                pixmap.loadFromData(foto_data)
+                
+                # Mostrar en un diálogo
+                dialog = QtWidgets.QDialog(self.becerros_widget)
+                dialog.setWindowTitle("Foto del Becerro")
+                layout = QtWidgets.QVBoxLayout(dialog)
+                
+                label_foto = QtWidgets.QLabel()
+                label_foto.setPixmap(pixmap.scaled(400, 400, QtCore.Qt.KeepAspectRatio))
+                layout.addWidget(label_foto)
+                
+                dialog.exec_()
+            else:
+                QtWidgets.QMessageBox.information(self.becerros_widget, "Información", "No hay foto disponible para este becerro")
+                
+        except Exception as e:
+            print(f"❌ Error al mostrar foto: {e}")

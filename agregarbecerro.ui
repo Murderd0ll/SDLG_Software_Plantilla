@@ -124,18 +124,8 @@
          <bool>false</bool>
         </property>
         <property name="currentText">
-         <string>Macho</string>
+         <string/>
         </property>
-        <item>
-         <property name="text">
-          <string>Macho</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Hembra</string>
-         </property>
-        </item>
        </widget>
       </item>
       <item>
@@ -230,28 +220,15 @@
    <item row="2" column="1">
     <widget class="QWidget" name="widget_3" native="true">
      <layout class="QGridLayout" name="gridLayout">
-      <item row="1" column="0" rowspan="2">
-       <widget class="QLineEdit" name="lineEdit_3">
-        <property name="minimumSize">
-         <size>
-          <width>200</width>
-          <height>200</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>200</width>
-          <height>200</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
+      <item row="0" column="1">
        <widget class="QLabel" name="label_11">
         <property name="text">
          <string>Observaciones</string>
         </property>
        </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QTextEdit" name="textEdit"/>
       </item>
      </layout>
     </widget>
