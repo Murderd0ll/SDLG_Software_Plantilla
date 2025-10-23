@@ -1,119 +1,244 @@
-/*= Style for mainwindow START
-  ==================================================== */
-	#MainWindow {
-		background-color: #fff;
-	}
-/*= END
-  ==================================================== */
+/* ===== ESTILO LOGIN CORREGIDO - VISIBLE Y BONITO ===== */
 
-/*= Style for button to change menu style START
-  ==================================================== */
-	#change_btn {
-		padding: 5px;
-		border: none;
-		width: 30px;
-		height: 30px;
-	}
-/*= END
-  ==================================================== */
+/* Fondo principal con imagen */
+QMainWindow {
+    background-image: url("./img/fondologin.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
 
-/*= Style for header widget START
-  ==================================================== */
-	#widget {
-		background-color: #f9fafd;
-	}
-/*= END
-  ==================================================== */
+/* Container principal */
+QWidget#centralwidget {
+    background: transparent;
+    border: none;
+    margin: 0px;
+    padding: 0px;
+}
 
-/*= Style for menu with icon only START
-  ==================================================== */
-  	/* style for widget */
-	#icon_only_widget {
-		background-color: #313a46;
-		width:50px;
-	}
+/* Widget contenedor del formulario - MENOS OPACO */
+QWidget#widget_2 {
+    background: rgba(255, 255, 255, 0.05); /* MUY TRANSPARENTE */
+    backdrop-filter: blur(5px);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+}
 
-    /* style for QPushButton and QLabel */
-	#icon_only_widget QPushButton, QLabel {
-		height:50px;
-		border:none;
-		/* border-bottom: 1px solid #b0b0b0; */
-	}
+/* Logo con efecto flotante */
+QLabel#labelLogo {
+    background: transparent;
+    border: none;
+    qproperty-alignment: AlignCenter;
+}
 
-	#icon_only_widget QPushButton:hover {
-		background-color: rgba( 86, 101, 115, 0.5);
-	}
+/* TÍTULOS EN BLANCO Y VISIBLES */
+QLabel#labelTitulo {
+    background: transparent;
+    border: none;
+    qproperty-alignment: AlignCenter;
+    color: #FFFFFF !important; /* FORZAR BLANCO */
+    font-size: 32px;
+    font-weight: bold;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
+                 0 0 20px rgba(255, 255, 255, 0.6);
+}
 
-	/* style for logo image */
-	#logo_label_1 {
-		padding: 5px
-	}
-/*= END
-  ==================================================== */
+/* SUBTÍTULOS EN BLANCO */
+QLabel#labelTitulo1, QLabel#labelTitulo2 {
+    background: transparent;
+    border: none;
+    qproperty-alignment: AlignCenter;
+    color: #FFFFFF !important; /* FORZAR BLANCO */
+    font-size: 16px;
+    font-weight: normal;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
 
-/*= Style for menu with icon and text START
-  ==================================================== */
-	/* style for widget */
-	#full_menu_widget {
-		background-color: #313a46;
-	}
+/* ===== CAMPOS DE TEXTO - VISIBLES Y BONITOS ===== */
 
-	/* style for QPushButton */
-	#full_menu_widget QPushButton {
-		border:none;
-		border-radius: 3px;
-		text-align: left;
-		padding: 8px 0 8px 15px;
-		color: #788596;
-	}
+/* Campo de usuario */
+QLineEdit#lineEditUsuario {
+    background-color: rgba(255, 255, 255, 0.95); /* MÁS OPACO */
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    padding: 12px 15px 12px 45px;
+    color: #000000 !important; /* TEXTO NEGRO PARA LEER */
+    font-size: 14px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 5px 0px 15px 0px;
+    min-height: 25px;
+    max-height: 25px;
+    min-width: 300px;
+    max-width: 300px;
+    
+    /* Icono de usuario */
+    background-image: url(":/icons/img/icons/user.png");
+    background-repeat: no-repeat;
+    background-position: 15px center;
+}
 
-	#full_menu_widget QPushButton:hover {
-		background-color: rgba( 86, 101, 115, 0.5);
-	}
+/* Placeholder visible */
+QLineEdit#lineEditUsuario::placeholder {
+    color: #666666 !important;
+}
 
-	#full_menu_widget QPushButton:checked {
-		color: #fff;
-	}
+/* CONTENEDOR DE CONTRASEÑA - FONDO BLANCO */
+QWidget#widget_4 {
+    background-color: rgba(255, 255, 255, 0.95); /* MÁS OPACO */
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    margin: 5px 0px 15px 0px;
+    min-height: 45px;
+    max-height: 45px;
+    min-width: 330px;
+    max-width: 330px;
+    padding: 0px;
+}
 
-	/* style for logo image */
-	#logo_label_2 {
-		padding: 5px;
-		color: #fff;
-	}
+/* Campo de contraseña DENTRO del contenedor */
+QLineEdit#lineEditPassword {
+    background-color: transparent !important; /* TRANSPARENTE DENTRO DEL FONDO BLANCO */
+    border: none !important;
+    border-radius: 8px 0px 0px 8px;
+    padding: 12px 0px 12px 45px;
+    color: #000000 !important; /* TEXTO NEGRO */
+    font-size: 14px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0px;
+    min-height: 45px;
+    max-height: 45px;
+    min-width: 255px; /* 300px - 45px del botón */
+    max-width: 255px;
+    
+    /* Icono de contraseña */
+    background-image: url(":/icons/img/icons/contra.png");
+    background-repeat: no-repeat;
+    background-position: 15px center;
+}
 
-	/* style for APP title */
-	#logo_label_3 {
-		padding-right: 10px;
-		color: #fff;
-	}
-/*= END
-  ==================================================== */
+/* Placeholder de contraseña */
+QLineEdit#lineEditPassword::placeholder {
+    color: #666666 !important;
+}
 
-/*= Style for search button START
-  ==================================================== */
-	#search_btn {
-		border: none;
-	}
-/*= END
-  ==================================================== */
+/* ===== BOTÓN DEL OJO - INTEGRADO CON FONDO BLANCO ===== */
+QPushButton#hide {
+    background-color: transparent;
+    border: none;
+    border-left: 1px solid rgba(0, 0, 0, 0.1); /* LÍNEA SUTIL */
+    border-radius: 0px 8px 8px 0px;
+    margin: 0px;
+    padding: 0px;
+    min-width: 45px;
+    max-width: 45px;
+    min-height: 40px;
+    max-height: 40px;
+    
+    /* Icono del ojo centrado */
+    background-image: url(":/icons/img/icons/ojo.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+    qproperty-text: "";
+    qproperty-icon: none;
+}
 
-/*= Style for search input START
-  ==================================================== */
-	#search_input {
-		border: none;
-		padding: 5px 10px;
-	}
+QPushButton#hide:hover {
+    background-color: rgba(160, 145, 114, 0.2);
+    background-image: url(":/icons/img/icons/ojont.png");
+}
 
-	#search_input:focus {
-		background-color: #70B9FE;
-	}
-/*= END
-  ==================================================== */
+QPushButton#hide:pressed {
+    background-color: rgba(160, 145, 114, 0.3);
+}
 
-/*= Style for user information button START
-  ==================================================== */
-	#user_btn {
-		border: none;
-	}
-/*= END
-  ==================================================== */
+/* ===== BOTÓN DE LOGIN - COLOR CORREGIDO ===== */
+QPushButton#btnLogin {
+    background: #a09172 !important; /* COLOR ORIGINAL */
+    border: none;
+    color: #FFFFFF !important;
+    border-radius: 8px;
+    padding: 12px 25px;
+    font-weight: bold;
+    font-size: 15px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    min-height: 40px;
+    max-height: 40px;
+    min-width: 285px;
+    max-width: 285px;
+    margin: 10px 0px 5px 0px;
+}
+
+QPushButton#btnLogin:hover {
+    background: #8a7d63 !important;
+}
+
+QPushButton#btnLogin:pressed {
+    background: #756a55 !important;
+}
+
+/* ===== EFECTOS FOCUS ===== */
+
+/* Focus en campo de usuario */
+QLineEdit#lineEditUsuario:focus {
+    background-color: rgba(255, 255, 255, 1);
+    border: 2px solid #a09172;
+    box-shadow: 0 0 0 3px rgba(160, 145, 114, 0.3);
+}
+
+/* Focus en contenedor de contraseña */
+QWidget#widget_4:focus-within {
+    background-color: rgba(255, 255, 255, 1);
+    border: 2px solid #a09172;
+    box-shadow: 0 0 0 3px rgba(160, 145, 114, 0.3);
+}
+
+/* Focus en campo de contraseña específico */
+QLineEdit#lineEditPassword:focus {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* ===== LAYOUTS Y ALINEACIÓN ===== */
+
+/* Grid layout del formulario */
+QGridLayout#gridLayout {
+    background: transparent;
+    border: none;
+    margin: 0px;
+    padding: 0px;
+    alignment: center;
+}
+
+/* Grid layout principal */
+QGridLayout#gridLayout_2 {
+    background: transparent;
+    border: none;
+    margin: 0px;
+    padding: 0px;
+    alignment: center;
+}
+
+/* Espaciadores transparentes */
+QSpacerItem {
+    background: transparent;
+}
+
+/* Widget del logo y títulos */
+QWidget#widget {
+    background: transparent;
+    border: none;
+    margin: 0px;
+    padding: 0px;
+}
+
+/* Layout vertical del header */
+QVBoxLayout#verticalLayout {
+    background: transparent;
+    border: none;
+    margin: 0px;
+    padding: 0px;
+    spacing: 8px;
+    alignment: center;
+}

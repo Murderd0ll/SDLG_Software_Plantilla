@@ -1,84 +1,49 @@
+# main.py CORREGIDO
 import sys
-from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton
-from PyQt5.QtCore import pyqtSlot, QFile, QTextStream
+import os
+from PyQt5 import QtWidgets
+from login_ui import Ui_login
+from login_controller import LoginController
 
-from menu_ui import Ui_MainWindow  # Asegúrate de que este archivo exista
+def cargar_estilos_login(window):
+    """Cargar estilos SOLO para la ventana de login"""
+    try:
+        if os.path.exists('style.qss'):
+            with open('style.qss', 'r', encoding='utf-8') as f:
+                estilo = f.read()
+            window.setStyleSheet(estilo)  # Aplica solo a esta ventana
+            print("✅ Estilos de login cargados correctamente")
+        else:
+            print("⚠️  Archivo style.qss no encontrado")
+    except Exception as e:
+        print(f"❌ Error cargando estilos login: {e}")
 
-class MainWindow(QMainWindow):
+class LoginWindow(QtWidgets.QMainWindow):
     def __init__(self):
-        super(MainWindow, self).__init__()
-
-        self.ui = Ui_MainWindow()
+        super().__init__()
+        self.ui = Ui_login()
         self.ui.setupUi(self)
-
-        self.ui.icon_only_widget.hide()  # Ocultar el widget inicialmente
-        self.ui.stackedWidget.setCurrentIndex(0)  # Mostrar la página de inicio
-        self.ui.indexbtn2.setChecked(True) 
         
-    def on_stackedWidget_currentChanged(self, index):
-        btn_list = self.ui.icon_only_widget.findChildren(QPushButton) \
-            + self.ui.full_menu_widget.findChildren(QPushButton)
+        # Cargar estilos SOLO para esta ventana
+        cargar_estilos_login(self)
         
-        for btn in btn_list:
-            if index in [5, 6]:  # Índices de las páginas de inicio y configuración
-                btn.setChecked(False)
-            else:
-                btn.setAutoExclusive(True)
+        # Inicializar el controlador
+        self.controller = LoginController(self.ui, self)
+        
+        print("🚀 Aplicación de login iniciada")
 
-    def on_indexbtn1_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(0)
-
-    def on_indexbtn2_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(0)
-
-    def on_becerrosbtn1_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(1)
-
-    def on_becerrosbtn2_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(1)
-
-    def on_animalesbtn1_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(2)
-
-    def on_animalesbtn2_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(2)
-
-    def on_corralesbtn1_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(3)
-
-    def on_corralesbtn2_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(3)
-
-    def on_propietariosbtn1_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(4)
-
-    def on_propietariosbtn2_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(4)
-
-    def on_bitacorabtn1_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(5)
-
-    def on_bitacorabtn2_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(5)
-
-    def on_reportesbtn1_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(6)
-
-    def on_reportesbtn2_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(6)
-
-    def on_seguridadbtn1_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(7)
-
-    def on_seguridadbtn2_toggled(self):
-        self.ui.stackedWidget.setCurrentIndex(7)
+def main():
+    app = QtWidgets.QApplication(sys.argv)
+    
+    # NO cargar estilos globalmente aquí
+    # Los estilos se cargarán individualmente en cada ventana
+    
+    # Crear y mostrar ventana de login
+    login_window = LoginWindow()
+    login_window.show()
+    
+    # Ejecutar aplicación
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    with open("style.qss", "r") as style_file:
-        style_str = style_file.read()
-    app.setStyleSheet(style_str)
-
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    main()

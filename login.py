@@ -2,14 +2,15 @@ import sys
 import os
 from PyQt5 import uic
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, 
-                             QPushButton, QHBoxLayout, QWidget)
-from PyQt5.QtCore import Qt, QTimer
+                             QPushButton, QHBoxLayout, QWidget, QFrame,
+                             QLineEdit, QVBoxLayout)
+from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QPixmap, QPalette, QBrush, QFont
 
 # Importar la clase del sidebar
-from sidebar import MainWindow  # Asegúrate de que el archivo se llame sidebar.py
+from sidebar import MainWindow
 
-class LoginWindow(QMainWindow):
+class AnimatedLoginWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
@@ -21,17 +22,23 @@ class LoginWindow(QMainWindow):
         self.setup_background()
         self.setup_logo()
         
-        # Aplicar estilos CSS básicos
+        # Aplicar estilos CSS mejorados
         self.setup_styles()
         
         # Configurar placeholders simples
         self.setup_placeholders()
+        
+        # Configurar botón de mostrar contraseña
+        self.setup_password_toggle()
         
         # Conectar eventos
         self.setup_events()
         
         # Centrar ventana
         self.center_window()
+        
+        # Configurar animaciones
+        self.setup_animations()
         
         print("✅ Ventana cargada correctamente")
     
@@ -58,7 +65,7 @@ class LoginWindow(QMainWindow):
             try:
                 if hasattr(self, 'labelLogo'):
                     pixmap = QPixmap(logo_path)
-                    scaled_pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    scaled_pixmap = pixmap.scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                     self.labelLogo.setPixmap(scaled_pixmap)
                     self.labelLogo.setAlignment(Qt.AlignCenter)
                     print("✅ Logo cargado desde:", logo_path)
@@ -83,55 +90,224 @@ class LoginWindow(QMainWindow):
         )
     
     def setup_styles(self):
-        """Aplicar estilos CSS básicos"""
+        """Aplicar estilos CSS mejorados sin bordes visibles"""
         style = """
         QMainWindow {
             background: transparent;
+            border: none;
+        }
+        
+        /* Contenedor principal completamente transparente */
+        QWidget {
+            background: rgba(0, 0, 0, 0.4);
+            border: none;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        
+        /* Eliminar bordes de todos los frames */
+        QFrame, QWidget {
+            background: transparent;
+            border: none;
+            border-radius: 0px;
         }
         
         QLabel {
             color: #FFFFFF;
             font-family: 'Segoe UI', Arial;
+            font-weight: bold;
+            background: transparent;
+            border: none;
         }
         
         QLineEdit {
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            padding: 12px 15px;
-            color: #1D2128;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            color: #FFFFFF;
             font-size: 14px;
             font-family: 'Segoe UI', Arial;
+            font-weight: bold;
+            selection-background-color: rgba(160, 145, 114, 0.5);
+        }
+        
+        QLineEdit:focus {
+            background-color: rgba(255, 255, 255, 0.15);
+            border: none;
+            outline: none;
+        }
+        
+        QLineEdit::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: normal;
         }
         
         QPushButton#btnLogin {
-            background-color: #a09172;
-            border: 2px solid #a09172;
+            background-color: rgba(160, 145, 114, 0.9);
+            border: none;
             color: #FFFFFF;
-            border-radius: 8px;
-            padding: 12px 25px;
+            border-radius: 12px;
+            padding: 15px 25px;
             font-weight: bold;
-            font-size: 15px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        
+        QPushButton#btnLogin:hover {
+            background-color: rgba(160, 145, 114, 1);
+        }
+        
+        QPushButton#btnLogin:pressed {
+            background-color: rgba(140, 125, 94, 0.9);
+        }
+        
+        /* Botón de mostrar contraseña - TRANSPARENTE */
+        #btnTogglePassword {
+            background-color: rgba(255, 255, 255, 0.0);
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
+            padding: 5px;
+            font-size: 16px;
+            min-width: 30px;
+            max-width: 30px;
+            min-height: 30px;
+            max-height: 30px;
+        }
+        
+        #btnTogglePassword:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        #btnTogglePassword:pressed {
+            background-color: rgba(255, 255, 255, 0.2);
         }
         
         QLabel#labelError {
-            color: #e74c3c;
+            color: #ff6b6b;
             font-size: 12px;
             font-weight: bold;
+            background: transparent;
+            padding: 8px;
+            border-radius: 8px;
+            background-color: rgba(231, 76, 60, 0.15);
+            border: none;
         }
         """
         self.setStyleSheet(style)
+    
+    def setup_password_toggle(self):
+        """Configurar botón de mostrar contraseña con posición corregida"""
+        try:
+            if hasattr(self, 'lineEditPassword'):
+                print("🔧 Configurando botón de contraseña...")
+                
+                # Crear el botón TRANSPARENTE
+                self.btnTogglePassword = QPushButton("👁️", self)
+                self.btnTogglePassword.setObjectName("btnTogglePassword")
+                self.btnTogglePassword.setCursor(Qt.PointingHandCursor)
+                self.btnTogglePassword.setFixedSize(30, 30)
+                self.btnTogglePassword.clicked.connect(self.toggle_password_visibility)
+                
+                # Posicionar el botón CORRECTAMENTE al lado del campo de contraseña
+                self.update_toggle_position()
+                
+                # Mostrar el botón
+                self.btnTogglePassword.show()
+                
+                self.password_visible = False
+                print("✅ Botón de contraseña creado y posicionado")
+                
+        except Exception as e:
+            print(f"❌ Error creando botón de contraseña: {e}")
+    
+    def update_toggle_position(self):
+        """Actualizar la posición del botón de contraseña - POSICIÓN CORREGIDA"""
+        try:
+            if hasattr(self, 'lineEditPassword') and hasattr(self, 'btnTogglePassword'):
+                # Obtener posición y tamaño del campo de contraseña
+                password_pos = self.lineEditPassword.pos()
+                password_size = self.lineEditPassword.size()
+                
+                # Calcular posición CORRECTA del botón
+                # A la derecha del campo, pero CENTRADO VERTICALMENTE
+                button_x = password_pos.x() + password_size.width() - 35  # Un poco más adentro
+                button_y = password_pos.y() + (password_size.height() - 30) // 2
+                
+                # Mover el botón a la posición corregida
+                self.btnTogglePassword.move(button_x, button_y)
+                
+                print(f"📍 Botón posicionado en: ({button_x}, {button_y})")
+                
+        except Exception as e:
+            print(f"❌ Error posicionando botón: {e}")
+    
+    def resizeEvent(self, event):
+        """Redimensionar el fondo y reposicionar botón"""
+        super().resizeEvent(event)
+        self.setup_background()
+        # Esperar un poco para que los widgets se redimensionen
+        QTimer.singleShot(50, self.update_toggle_position)
+    
+    def moveEvent(self, event):
+        """Reposicionar botón cuando se mueve la ventana"""
+        super().moveEvent(event)
+        QTimer.singleShot(50, self.update_toggle_position)
+    
+    def showEvent(self, event):
+        """Ejecutar animación al mostrar la ventana"""
+        super().showEvent(event)
+        self.enter_animation.start()
+        # Esperar a que la ventana se muestre completamente antes de posicionar
+        QTimer.singleShot(100, self.update_toggle_position)
+    
+    def toggle_password_visibility(self):
+        """Alternar entre mostrar y ocultar la contraseña"""
+        try:
+            if hasattr(self, 'lineEditPassword') and hasattr(self, 'btnTogglePassword'):
+                if self.password_visible:
+                    # Ocultar contraseña
+                    self.lineEditPassword.setEchoMode(QLineEdit.Password)
+                    self.btnTogglePassword.setText("👁️")
+                    self.password_visible = False
+                    print("🔒 Contraseña oculta")
+                else:
+                    # Mostrar contraseña
+                    self.lineEditPassword.setEchoMode(QLineEdit.Normal)
+                    self.btnTogglePassword.setText("🔒")
+                    self.password_visible = True
+                    print("👀 Contraseña visible")
+        except Exception as e:
+            print(f"❌ Error alternando visibilidad: {e}")
+    
+    def setup_animations(self):
+        """Configurar animaciones para la ventana"""
+        try:
+            # Animación de entrada (fade in)
+            self.enter_animation = QPropertyAnimation(self, b"windowOpacity")
+            self.enter_animation.setDuration(800)
+            self.enter_animation.setStartValue(0.0)
+            self.enter_animation.setEndValue(1.0)
+            self.enter_animation.setEasingCurve(QEasingCurve.OutCubic)
+            
+            print("✅ Animaciones configuradas")
+            
+        except Exception as e:
+            print(f"❌ Error configurando animaciones: {e}")
     
     def setup_placeholders(self):
         """Configurar placeholders simples"""
         try:
             if hasattr(self, 'lineEditUsuario'):
-                self.lineEditUsuario.setPlaceholderText("Usuario")
+                self.lineEditUsuario.setPlaceholderText("👤 Usuario")
                 print("✅ Placeholder usuario configurado")
             
             if hasattr(self, 'lineEditPassword'):
-                self.lineEditPassword.setPlaceholderText("Contraseña")
-                self.lineEditPassword.setEchoMode(self.lineEditPassword.Password)
+                self.lineEditPassword.setPlaceholderText("🔒 Contraseña")
+                self.lineEditPassword.setEchoMode(QLineEdit.Password)
                 print("✅ Placeholder contraseña configurado")
                 
         except Exception as e:
@@ -139,28 +315,27 @@ class LoginWindow(QMainWindow):
     
     def setup_events(self):
         """Conectar eventos de manera segura"""
-        if hasattr(self, 'btnLogin'):
-            self.btnLogin.clicked.connect(self.validar_login)
-            print("✅ Botón login conectado")
-        else:
-            print("❌ No se encontró btnLogin")
-        
-        if hasattr(self, 'lineEditUsuario'):
-            self.lineEditUsuario.returnPressed.connect(self.validar_login)
-            self.lineEditUsuario.setFocus()
-            print("✅ Campo usuario conectado")
-        
-        if hasattr(self, 'lineEditPassword'):
-            self.lineEditPassword.returnPressed.connect(self.validar_login)
-            print("✅ Campo contraseña conectado")
-    
-    def resizeEvent(self, event):
-        """Redimensionar el fondo cuando cambia el tamaño de la ventana"""
-        super().resizeEvent(event)
-        self.setup_background()
+        try:
+            if hasattr(self, 'btnLogin'):
+                self.btnLogin.clicked.connect(self.validar_login)
+                print("✅ Botón login conectado")
+            else:
+                print("❌ No se encontró btnLogin")
+            
+            if hasattr(self, 'lineEditUsuario'):
+                self.lineEditUsuario.returnPressed.connect(self.validar_login)
+                self.lineEditUsuario.setFocus()
+                print("✅ Campo usuario conectado")
+            
+            if hasattr(self, 'lineEditPassword'):
+                self.lineEditPassword.returnPressed.connect(self.validar_login)
+                print("✅ Campo contraseña conectado")
+                
+        except Exception as e:
+            print(f"❌ Error conectando eventos: {e}")
     
     def validar_login(self):
-        """Validar credenciales"""
+        """Validar credenciales con animación"""
         try:
             usuario = ""
             contrasena = ""
@@ -193,33 +368,55 @@ class LoginWindow(QMainWindow):
             if hasattr(self, 'labelError'):
                 self.labelError.setText(mensaje)
                 if tipo == "error":
-                    self.labelError.setStyleSheet("color: #e74c3c;")
+                    self.labelError.setStyleSheet("""
+                        color: #ff6b6b;
+                        font-size: 12px;
+                        font-weight: bold;
+                        background: transparent;
+                        padding: 8px;
+                        border-radius: 8px;
+                        background-color: rgba(231, 76, 60, 0.15);
+                    """)
                 else:
-                    self.labelError.setStyleSheet("color: #2ecc71;")
+                    self.labelError.setStyleSheet("""
+                        color: #2ecc71;
+                        font-size: 12px;
+                        font-weight: bold;
+                        background: transparent;
+                        padding: 8px;
+                        border-radius: 8px;
+                        background-color: rgba(46, 204, 113, 0.15);
+                    """)
                 print(f"📢 Mensaje: {mensaje}")
         except Exception as e:
             print(f"❌ Error mostrando mensaje: {e}")
     
     def abrir_menu_principal(self):
-        """Abrir ventana principal (sidebar)"""
+        """Abrir ventana principal con animación"""
         try:
-            # Ocultar el login
+            # Animación de salida
+            exit_animation = QPropertyAnimation(self, b"windowOpacity")
+            exit_animation.setDuration(600)
+            exit_animation.setStartValue(1.0)
+            exit_animation.setEndValue(0.0)
+            exit_animation.setEasingCurve(QEasingCurve.InCubic)
+            exit_animation.start()
+            
+            exit_animation.finished.connect(self._open_sidebar)
+            
+        except Exception as e:
+            print(f"❌ Error en animación de salida: {e}")
+            self._open_sidebar()
+    
+    def _open_sidebar(self):
+        """Abrir el sidebar después de la animación"""
+        try:
             self.hide()
-            
-            # Crear y mostrar el sidebar
             self.sidebar = MainWindow()
-            
-            # Conectar la señal de cierre del sidebar para cerrar toda la aplicación
             self.sidebar.destroyed.connect(self.cerrar_aplicacion)
-            
-            # Mostrar el sidebar
             self.sidebar.show()
-            
-            # Opcional: Maximizar la ventana del sidebar
             self.sidebar.showMaximized()
-            
             print("✅ Sidebar abierto correctamente")
-            
         except Exception as e:
             print(f"❌ Error al abrir el sidebar: {e}")
             QMessageBox.critical(self, "Error", f"No se pudo abrir el menú principal: {e}")
@@ -235,16 +432,8 @@ def main():
     font = QFont("Segoe UI", 10)
     app.setFont(font)
     
-    # Cargar estilo QSS si existe
-    style_path = "style.qss"
-    if os.path.exists(style_path):
-        try:
-            with open(style_path, "r") as style_file:
-                style_str = style_file.read()
-                app.setStyleSheet(style_str)
-                print("✅ Estilo QSS cargado correctamente")
-        except Exception as e:
-            print(f"❌ Error cargando estilo QSS: {e}")
+    # Ignorar warning de libpng
+    os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.svg.warning=false'
     
     # Verificar que los archivos existen
     ui_path = os.path.join("ui", "login.ui")
@@ -263,11 +452,13 @@ def main():
         print(f"⚠️ Advertencia: No encuentro {fondo_path}")
     
     try:
-        window = LoginWindow()
+        window = AnimatedLoginWindow()
         window.show()
         sys.exit(app.exec_())
     except Exception as e:
         print(f"❌ Error crítico: {e}")
+        import traceback
+        traceback.print_exc()
         input("Presiona Enter para salir...")
 
 if __name__ == "__main__":

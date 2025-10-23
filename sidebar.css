@@ -1,0 +1,353 @@
+/* sidebar_animado.css */
+/* Animaciones personalizadas */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes buttonHover {
+    from {
+        background-color: inherit;
+    }
+    to {
+        background-color: rgba(86, 101, 115, 0.5);
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/*= Style for mainwindow START
+  ==================================================== */
+#MainWindow {
+    background-color: #fff;
+    animation: fadeIn 0.8s ease-out;
+}
+
+/*= END
+  ==================================================== */
+
+/*= Style for button to change menu style START
+  ==================================================== */
+#change_btn {
+    padding: 5px;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+#change_btn:hover {
+    background-color: rgba(86, 101, 115, 0.2);
+    transform: rotate(90deg);
+}
+
+/*= END
+  ==================================================== */
+
+/*= Style for header widget START
+  ==================================================== */
+#widget {
+    background-color: #f9fafd;
+    border-bottom: 1px solid #e0e0e0;
+    animation: slideInRight 0.6s ease-out;
+}
+
+/*= END
+  ==================================================== */
+
+/*= Style for menu with icon only START
+  ==================================================== */
+/* style for widget */
+#icon_only_widget {
+    background-color: #313a46;
+    width: 50px;
+    animation: slideInLeft 0.6s ease-out;
+}
+
+/* style for QPushButton and QLabel */
+#icon_only_widget QPushButton, QLabel {
+    height: 50px;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#icon_only_widget QPushButton:hover {
+    background-color: rgba(86, 101, 115, 0.5);
+    animation: buttonHover 0.3s ease-out;
+    padding-left: 5px;
+}
+
+#icon_only_widget QPushButton:checked {
+    background-color: #566573;
+    border-left: 3px solid #a09172;
+}
+
+#icon_only_widget QPushButton:checked::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(160, 145, 114, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    animation: ripple 0.6s ease-out;
+}
+
+/* style for logo image */
+#logo_label_1 {
+    padding: 5px;
+    background-color: rgba(160, 145, 114, 0.1);
+    animation: fadeInScale 0.8s ease-out;
+}
+
+/*= END
+  ==================================================== */
+
+/*= Style for menu with icon and text START
+  ==================================================== */
+/* style for widget */
+#full_menu_widget {
+    background-color: #313a46;
+    animation: slideInLeft 0.6s ease-out;
+}
+
+/* style for QPushButton */
+#full_menu_widget QPushButton {
+    border: none;
+    border-radius: 3px;
+    text-align: left;
+    padding: 8px 0 8px 15px;
+    color: #788596;
+    background-color: transparent;
+    transition: all 0.3s ease;
+    margin: 2px 5px;
+    position: relative;
+    overflow: hidden;
+}
+
+#full_menu_widget QPushButton:hover {
+    background-color: rgba(86, 101, 115, 0.5);
+    color: #ffffff;
+    transform: translateX(5px);
+    animation: buttonHover 0.3s ease-out;
+}
+
+#full_menu_widget QPushButton:checked {
+    color: #fff;
+    background-color: #566573;
+    border-left: 3px solid #a09172;
+    font-weight: bold;
+}
+
+#full_menu_widget QPushButton:checked::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: #a09172;
+    border-radius: 50%;
+    animation: fadeInScale 0.3s ease-out;
+}
+
+/* style for logo image */
+#label_2 {
+    padding: 5px;
+    background-color: rgba(160, 145, 114, 0.1);
+    border-radius: 8px;
+    animation: fadeInScale 0.8s ease-out;
+}
+
+/* style for APP title */
+#label_3 {
+    padding-right: 10px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    animation: fadeIn 1s ease-out;
+}
+
+/* Botón de menú en sidebar completo */
+#menubtn_2 {
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 5px;
+    transition: all 0.3s ease;
+}
+
+#menubtn_2:hover {
+    background-color: rgba(86, 101, 115, 0.5);
+    transform: rotate(90deg);
+}
+
+/*= END
+  ==================================================== */
+
+/*= Style for search button START
+  ==================================================== */
+#search_btn {
+    border: none;
+    background-color: transparent;
+    border-radius: 4px;
+    padding: 5px;
+    transition: all 0.3s ease;
+}
+
+#search_btn:hover {
+    background-color: rgba(86, 101, 115, 0.2);
+    transform: scale(1.1);
+}
+
+/*= END
+  ==================================================== */
+
+/*= Style for search input START
+  ==================================================== */
+#search_input {
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+}
+
+#search_input:focus {
+    background-color: #70B9FE;
+    color: white;
+    box-shadow: 0 0 0 2px rgba(112, 185, 254, 0.3);
+}
+
+/*= END
+  ==================================================== */
+
+/*= Style for user information button START
+  ==================================================== */
+#user_btn {
+    border: none;
+    background-color: transparent;
+    border-radius: 4px;
+    padding: 5px;
+    transition: all 0.3s ease;
+}
+
+#user_btn:hover {
+    background-color: rgba(86, 101, 115, 0.2);
+    transform: scale(1.05);
+}
+
+/*= END
+  ==================================================== */
+
+/* Botones de cerrar sesión con efectos especiales */
+#cerrarbtn1, #cerrarbtn2 {
+    border: none;
+    border-radius: 4px;
+    margin: 5px;
+    transition: all 0.3s ease;
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+#cerrarbtn1:hover, #cerrarbtn2:hover {
+    background-color: rgba(244, 67, 54, 0.3);
+    transform: translateY(-2px);
+}
+
+#cerrarbtn1:pressed, #cerrarbtn2:pressed {
+    background-color: rgba(244, 67, 54, 0.4);
+    transform: translateY(0px);
+}
+
+/* Área de contenido principal */
+#widget_3 {
+    background-color: #ffffff;
+    animation: slideInRight 0.6s ease-out 0.2s both;
+}
+
+/* Stacked widget pages */
+QStackedWidget {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 10px;
+}
+
+QStackedWidget QLabel {
+    color: #333333;
+    font-size: 14px;
+    padding: 20px;
+}
+
+/* Efectos de transición entre páginas */
+QStackedWidget > QWidget {
+    animation: fadeInScale 0.4s ease-out;
+}
+
+/* Botón de menú en sidebar ícono */
+#menubtn {
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+#menubtn:hover {
+    background-color: rgba(86, 101, 115, 0.5);
+    transform: rotate(90deg);
+}
+
+/* Efecto de notificación/badge */
+.badge {
+    background-color: #ff4444;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
