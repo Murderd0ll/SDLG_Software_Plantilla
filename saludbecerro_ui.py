@@ -147,7 +147,7 @@ class Ui_Dialog(object):
         self.label_6.setText(_translate("Dialog", "Condición de salud"))
         self.label_9.setText(_translate("Dialog", "Tratamiento"))
         self.indexbtn2.setText(_translate("Dialog", "Subir archivo"))
-        self.label_7.setText(_translate("Dialog", "Fecha de nacimiento"))
+        self.label_7.setText(_translate("Dialog", "Fecha de revisión"))
         self.label_11.setText(_translate("Dialog", "Observaciones"))
         self.pushButton.setText(_translate("Dialog", "Cancelar"))
         self.pushButton_2.setText(_translate("Dialog", "Guardar"))
