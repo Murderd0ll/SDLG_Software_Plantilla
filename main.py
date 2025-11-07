@@ -2,8 +2,8 @@
 import sys
 import os
 from PyQt5 import QtWidgets
-from login_ui import Ui_login
-from login_controller import LoginController
+from ui.login_ui import Ui_login
+from controllers.login_controller import LoginController
 
 def cargar_estilos_login(window):
     """Cargar estilos SOLO para la ventana de login"""

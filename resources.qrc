@@ -1,5 +1,28 @@
 <RCC>
   <qresource prefix="icons">
+    <file>img/icons/Nin.png</file>
+    <file>img/icons/crear.png</file>
+    <file>img/icons/restore.png</file>
+    <file>img/icons/Nout.png</file>
+    <file>img/icons/Nusers.png</file>
+    <file>img/icons/Nlok.png</file>
+    <file>img/icons/users.png</file>
+    <file>img/icons/in.png</file>
+    <file>img/icons/out.png</file>
+    <file>img/icons/flecha.png</file>
+    <file>img/icons/Nsperm.png</file>
+    <file>img/icons/Ndoctor.png</file>
+    <file>img/icons/search.png</file>
+    <file>img/icons/Bbecerro.png</file>
+    <file>img/icons/Bcow.png</file>
+    <file>img/icons/Bfence.png</file>
+    <file>img/icons/Gbecerro.png</file>
+    <file>img/icons/mars.png</file>
+    <file>img/icons/venus.png</file>
+    <file>img/icons/Nreporte.png</file>
+    <file>img/icons/doctor.png</file>
+    <file>img/icons/sperm.png</file>
+    <file>img/icons/corason.png</file>
     <file>img/icons/contra.png</file>
     <file>img/icons/seguridad2.png</file>
     <file>img/icons/user.png</file>
@@ -25,5 +48,6 @@
     <file>img/icons/propietarios.png</file>
     <file>img/icons/reporte.png</file>
     <file>img/icons/seguridad.png</file>
+    <file>img/icons/Gcow.png</file>
   </qresource>
 </RCC>
