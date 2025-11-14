@@ -5,16 +5,18 @@ import os
 from pathlib import Path
 
 class EditarBecerroController(QtWidgets.QDialog):
-    def __init__(self, becerro_data=None, parent=None):
+    def __init__(self, becerro_data=None, parent=None, bitacora_controller=None):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         
         # Variable para almacenar la foto
         self.foto_data = None
         self.foto_ruta = None
         self.becerro_original = becerro_data  # Datos originales del becerro
+        self.arete_original = becerro_data.get('arete', '') if becerro_data else ''
         
         self.setup_connections()
         self.configurar_combobox()
@@ -130,10 +132,19 @@ class EditarBecerroController(QtWidgets.QDialog):
             print(f"🔄 Cargando datos del becerro: {self.becerro_original}")
             
             # Campos básicos
-            self.ui.lineEdit_4.setText(self.becerro_original.get('arete', ''))  # Arete (posiblemente readonly)
-            self.ui.lineEdit.setText(self.becerro_original.get('arete', ''))    # Arete editable
+            arete = self.becerro_original.get('arete', '')
+            self.ui.lineEdit.setText(arete)
+            self.ui.lineEdit_4.setText(arete)    # Arete editable
             self.ui.lineEdit_2.setText(self.becerro_original.get('nombre', ''))
-            self.ui.doubleSpinBox.setValue(self.becerro_original.get('peso', 0.0))
+            
+            # Peso - manejo seguro
+            peso = self.becerro_original.get('peso', 0.0)
+            try:
+                peso_float = float(peso) if peso else 0.0
+                self.ui.doubleSpinBox.setValue(peso_float)
+            except (ValueError, TypeError):
+                self.ui.doubleSpinBox.setValue(0.0)
+                print("⚠️ Valor de peso inválido, usando 0.0")
             
             # Combobox - establecer valores
             sexo = self.becerro_original.get('sexo', 'Macho')
@@ -169,7 +180,7 @@ class EditarBecerroController(QtWidgets.QDialog):
                     self.ui.comboBox_5.setEditText(arete_madre)
             
             # Fecha de nacimiento
-            fecha_nacimiento = self.becerro_original.get('nacimiento')
+            fecha_nacimiento = self.becerro_original.get('nacimiento', '')
             if fecha_nacimiento:
                 try:
                     if isinstance(fecha_nacimiento, str):
@@ -180,14 +191,12 @@ class EditarBecerroController(QtWidgets.QDialog):
                 except:
                     # Si hay error con la fecha, usar fecha actual
                     self.ui.dateEdit.setDate(QtCore.QDate.currentDate())
-            
-            # Arete padre
-            arete_padre = self.becerro_original.get('aretepadre', '')
-            self.ui.lineEdit_5.setText(arete_padre if arete_padre else '')
+                    print("⚠️ Error al cargar fecha, usando fecha actual")
             
             # Observaciones
             observaciones = self.becerro_original.get('observacion', '')
-            self.ui.lineEdit_3.setText(observaciones if observaciones else '')
+            if hasattr(self.ui, 'textEdit') and observaciones:
+                self.ui.textEdit.setPlainText(observaciones)
             
             # Foto - cargar si existe
             foto_data = self.becerro_original.get('foto')
@@ -203,6 +212,12 @@ class EditarBecerroController(QtWidgets.QDialog):
             print(f"❌ Error al cargar datos del becerro: {e}")
             import traceback
             traceback.print_exc()
+    
+    def obtener_texto_observaciones(self):
+        """Obtiene el texto de observaciones del QTextEdit"""
+        if hasattr(self.ui, 'textEdit'):
+            return self.ui.textEdit.toPlainText().strip()
+        return ""
     
     def subir_foto(self):
         """Abre un diálogo para seleccionar y cargar una foto"""
@@ -236,13 +251,12 @@ class EditarBecerroController(QtWidgets.QDialog):
                 
                 # Mostrar información al usuario
                 nombre_archivo = Path(ruta_archivo).name
-                tamaño_kb = tamaño_archivo / 1024
                 
                 # Actualizar la interfaz
                 self.ui.indexbtn2.setText("✓ Foto Cargada")
                 self.ui.indexbtn2.setStyleSheet("QPushButton { background-color: #27ae60; color: white; }")
                 
-                print(f"✅ Foto cargada: {nombre_archivo} ({tamaño_kb:.1f} KB)")
+                print(f"✅ Foto cargada: {nombre_archivo}")
                 
         except Exception as e:
             print(f"❌ Error al subir foto: {e}")
@@ -273,11 +287,24 @@ class EditarBecerroController(QtWidgets.QDialog):
                 QtWidgets.QMessageBox.warning(self, "Advertencia", "El peso debe ser mayor a 0")
                 self.ui.doubleSpinBox.setFocus()
                 return False
+            
+            # Verificar si el arete ya existe (solo si cambió el arete)
+            if arete != self.arete_original:
+                becerro_existente = self.db.obtener_becerro_por_arete(arete)
+                if becerro_existente:
+                    QtWidgets.QMessageBox.warning(
+                        self, 
+                        "Arete duplicado", 
+                        f"Ya existe un becerro con el arete: {arete}"
+                    )
+                    self.ui.lineEdit.setFocus()
+                    return False
                 
             return True
             
         except Exception as e:
             print(f"❌ Error en validación: {e}")
+            QtWidgets.QMessageBox.critical(self, "Error", f"Error en validación: {str(e)}")
             return False
     
     def guardar_cambios(self):
@@ -287,7 +314,7 @@ class EditarBecerroController(QtWidgets.QDialog):
                 return
                 
             # Obtener datos del formulario
-            arete_original = self.becerro_original.get('arete')
+            arete_original = self.arete_original
             arete = self.ui.lineEdit.text().strip()
             nombre = self.ui.lineEdit_2.text().strip()
             peso = self.ui.doubleSpinBox.value()
@@ -297,34 +324,67 @@ class EditarBecerroController(QtWidgets.QDialog):
             corral = self.ui.comboBox.currentText().strip()
             estatus = self.ui.comboBox_6.currentText()
             arete_madre = self.ui.comboBox_5.currentText().strip()
-            arete_padre = self.ui.lineEdit_5.text().strip()
-            observaciones = self.ui.lineEdit_3.text().strip()
+            
+            # Obtener observaciones
+            observaciones = self.obtener_texto_observaciones()
             
             # Si arete_madre es el valor por defecto, guardar como None
-            if arete_madre == "Sin madre registrada" or arete_madre == "Sin madre":
+            if arete_madre in ["Sin madre registrada", "Sin madre", ""]:
                 arete_madre = None
             
             print(f"📝 Guardando cambios del becerro: {nombre}, Arete: {arete}")
             print(f"   Arete original: {arete_original}")
-            print(f"   Sexo: {sexo}, Estatus: {estatus}")
+            print(f"   Peso: {peso}, Sexo: {sexo}, Raza: {raza}")
+            print(f"   Corral: {corral}, Estatus: {estatus}")
+            print(f"   Arete madre: {arete_madre}")
             print(f"   Observaciones: {observaciones}")
             print(f"   Foto actualizada: {'Sí' if self.foto_data else 'No'}")
+            
+            # ✅ REGISTRAR EN BITÁCORA ANTES DE ACTUALIZAR (similar al de animales)
+            if self.bitacora_controller:
+                cambios = []
+                if arete != arete_original:
+                    cambios.append(f"Arete: {arete_original} → {arete}")
+                if nombre != self.becerro_original.get('nombre', ''):
+                    cambios.append(f"Nombre: {self.becerro_original.get('nombre', '')} → {nombre}")
+                if peso != float(self.becerro_original.get('peso', 0)):
+                    cambios.append(f"Peso: {self.becerro_original.get('peso', 0)} → {peso}")
+                if sexo != self.becerro_original.get('sexo', ''):
+                    cambios.append(f"Sexo: {self.becerro_original.get('sexo', '')} → {sexo}")
+                if raza != self.becerro_original.get('raza', ''):
+                    cambios.append(f"Raza: {self.becerro_original.get('raza', '')} → {raza}")
+                if corral != self.becerro_original.get('corral', ''):
+                    cambios.append(f"Corral: {self.becerro_original.get('corral', '')} → {corral}")
+                if estatus != self.becerro_original.get('estatus', ''):
+                    cambios.append(f"Estatus: {self.becerro_original.get('estatus', '')} → {estatus}")
+                if arete_madre != self.becerro_original.get('aretemadre', ''):
+                    cambios.append(f"Arete madre: {self.becerro_original.get('aretemadre', '')} → {arete_madre}")
+                
+                if cambios:
+                    cambios_str = ", ".join(cambios)
+                    self.bitacora_controller.registrar_accion(
+                        modulo="Becerros",
+                        accion="ACTUALIZAR",
+                        descripcion=f"Edición de becerro: {nombre}",
+                        detalles=cambios_str,
+                        arete_afectado=arete_original
+                    )
+                    print("✅ Edición registrada en bitácora con cambios detallados")
             
             # Actualizar en la base de datos
             if self.db.actualizar_becerro(
                 arete_original=arete_original,
                 arete=arete,
                 nombre=nombre,
-                peso=peso,
+                peso=str(peso),
                 sexo=sexo,
                 raza=raza,
                 nacimiento=fecha_nacimiento,
                 corral=corral,
                 estatus=estatus,
                 aretemadre=arete_madre,
-                aretepadre=arete_padre if arete_padre else None,
                 observacion=observaciones if observaciones else None,
-                foto=self.foto_data  # Incluir la foto como BLOB (puede ser None)
+                foto=self.foto_data
             ):
                 QtWidgets.QMessageBox.information(self, "Éxito", "Becerro actualizado correctamente")
                 self.accept()
@@ -347,7 +407,6 @@ class EditarBecerroController(QtWidgets.QDialog):
             'corral': self.ui.comboBox.currentText().strip(),
             'estatus': self.ui.comboBox_6.currentText(),
             'aretemadre': self.ui.comboBox_5.currentText().strip(),
-            'aretepadre': self.ui.lineEdit_5.text().strip(),
-            'observacion': self.ui.lineEdit_3.text().strip(),
+            'observacion': self.obtener_texto_observaciones(),
             'foto': self.foto_data
         }

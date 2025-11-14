@@ -5,11 +5,12 @@ import os
 from pathlib import Path
 
 class AgregarPropietarioController(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, bitacora_controller=None):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         
         # Variable para almacenar la foto
         self.foto_data = None
@@ -120,7 +121,7 @@ class AgregarPropietarioController(QtWidgets.QDialog):
                 return False
             
             # Validar formato de correo si se ingresó
-            if not correo:
+            if correo and "@" not in correo:
                 QtWidgets.QMessageBox.warning(self, "Advertencia", "El formato del correo electrónico no es válido")
                 self.ui.lineEdit_5.setFocus()
                 return False
@@ -167,6 +168,17 @@ class AgregarPropietarioController(QtWidgets.QDialog):
                 observaciones=observaciones if observaciones else None,
                 foto=self.foto_data  # Incluir la foto como BLOB
             ):
+                # ✅ REGISTRAR EN BITÁCORA - AÑADIDO
+                if self.bitacora_controller:
+                    datos_propietario = f"Nombre: {nombre}, Tel: {telefono}, Correo: {correo}, RFC: {rfc}"
+                    self.bitacora_controller.registrar_accion(
+                        modulo="Propietarios",
+                        accion="INSERTAR",
+                        descripcion="Alta de nuevo propietario",
+                        detalles=datos_propietario
+                    )
+                    print("✅ Acción registrada en bitácora")
+                
                 QtWidgets.QMessageBox.information(self, "Éxito", "Propietario agregado correctamente")
                 self.accept()
             else:

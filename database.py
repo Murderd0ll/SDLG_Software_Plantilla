@@ -1,3 +1,4 @@
+import hashlib
 import sqlite3
 import os
 from typing import List, Tuple, Optional
@@ -78,7 +79,7 @@ class Database:
         
     def insertar_becerro(self, arete: str, nombre: str, peso: float, sexo: str, raza: str, 
                        nacimiento: str, corral: str, estatus: str, 
-                       aretemadre: str, aretepadre: str, observacion: str, foto: bytes = None) -> bool:
+                       aretemadre: str, observacion: str, foto: bytes = None) -> bool:
         """Inserta un nuevo registro en la tabla tbecerros"""
         query = """
         INSERT INTO tbecerros (aretebece, nombrebece, pesobece, sexobece, razabece, nacimientobece, 
@@ -98,7 +99,7 @@ class Database:
             UPDATE tbecerros 
             SET aretebece = ?, nombrebece = ?, pesobece = ?, sexobece = ?, razabece = ?, 
                 nacimientobece = ?, corralbece = ?, estatusbece = ?, aretemadre = ?, 
-                , observacionbece = ?, fotobece = ?
+                observacionbece = ?, fotobece = ?
             WHERE aretebece = ?
             """
             params = (
@@ -503,20 +504,6 @@ class Database:
             return False
 
     # MÉTODOS PARA SALUD
-    def obtener_registros_salud_por_arete(self, arete_becerro: str) -> List[Tuple]:
-        """Obtiene todos los registros de salud de un becerro"""
-        query = """
-        SELECT id_salud, veterinario, procedimiento, condicion_salud, tratamiento, 
-               fecha_revision, observaciones, nombre_archivo, fecha_registro
-        FROM tsalud 
-        WHERE arete_becerro = ?
-        ORDER BY fecha_revision DESC
-        """
-        cursor = self.ejecutar_consulta(query, (arete_becerro,))
-        if cursor:
-            return cursor.fetchall()
-        return []
-
     def obtener_archivo_salud(self, id_salud: int) -> Optional[bytes]:
         """Obtiene el archivo asociado a un registro de salud"""
         query = "SELECT archivo FROM tsalud WHERE id_salud = ?"
@@ -1039,59 +1026,676 @@ class Database:
         except Exception as e:
             print(f"❌ Error obteniendo registros de reproducción: {e}")
             return []
-        
-def obtener_usuarios(self):
-    """Obtiene todos los usuarios de la base de datos"""
-    try:
-        query = """
-        SELECT id_usuario, usuario, nombre_completo, telefono, rol, fecha_creacion
-        FROM tusuarios 
-        ORDER BY nombre_completo
-        """
-        cursor = self.ejecutar_consulta(query)
-        if cursor:
-            return cursor.fetchall()
-        return []
-    except Exception as e:
-        print(f"❌ Error obteniendo usuarios: {e}")
-        # Retornar datos de ejemplo para desarrollo
-        return [
-            (1, 'admin', 'Administrador Principal', '555-1234', 'Administrador', '2024-01-01'),
-            (2, 'usuario1', 'Usuario Normal', '555-5678', 'Usuario', '2024-01-02'),
-            (3, 'veterinario', 'Dr. Veterinario', '555-9012', 'Veterinario', '2024-01-03')
-        ]
 
-def buscar_usuarios_por_nombre(self, nombre: str):
-    """Busca usuarios por nombre"""
-    try:
-        query = """
-        SELECT id_usuario, usuario, nombre_completo, telefono, rol, fecha_creacion
-        FROM tusuarios 
-        WHERE nombre_completo LIKE ? OR usuario LIKE ?
-        ORDER BY nombre_completo
-        """
-        cursor = self.ejecutar_consulta(query, (f'%{nombre}%', f'%{nombre}%'))
-        if cursor:
-            return cursor.fetchall()
-        return []
-    except Exception as e:
-        print(f"❌ Error buscando usuarios: {e}")
-        return []
 
-def eliminar_usuario_por_id(self, id_usuario: str) -> bool:
-    """Elimina un usuario por su ID"""
-    try:
-        print(f"🗑️ BD - Intentando eliminar usuario por ID: {id_usuario}")
-        query = "DELETE FROM tusuarios WHERE id_usuario = ?"
-        cursor = self.ejecutar_consulta(query, (id_usuario,))
-        
-        if cursor:
-            filas_afectadas = cursor.rowcount
-            print(f"🗑️ BD - Filas afectadas: {filas_afectadas}")
-            return filas_afectadas > 0
-        else:
-            print("🗑️ BD - Error: cursor es None")
+    def obtener_registros_salud_por_arete(self, arete_animal: str) -> List[Tuple]:
+        """Obtiene todos los registros de salud de un animal por su arete"""
+        try:
+            print(f"🔍 BD - Buscando registros de salud para arete: '{arete_animal}'")
+            
+            # Verificar que el arete no esté vacío
+            if not arete_animal or arete_animal.strip() == "":
+                print("❌ BD - Arete vacío, retornando lista vacía")
+                return []
+            
+            query = """
+            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
+                   medprev, condicionsalud, fecharev, observacionsalud, archivo
+            FROM tsalud 
+            WHERE areteanimal = ?
+            ORDER BY fecharev DESC
+            """
+            cursor = self.ejecutar_consulta(query, (arete_animal.strip(),))
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} registros de salud encontrados para arete: '{arete_animal}'")
+                
+                # Debug: mostrar los primeros registros
+                for i, resultado in enumerate(resultados[:3]):
+                    print(f"   Registro {i+1}: Arete={resultado[1]}, Procedimiento={resultado[4]}")
+                    
+                return resultados
+            return []
+        except Exception as e:
+            print(f"❌ BD - Error en obtener_registros_salud_por_arete: {e}")
+            return []
+
+    # En database.py, dentro de la clase Database, agrega estos métodos:
+
+    def obtener_todos_registros_salud(self):
+        """Obtiene todos los registros de salud"""
+        try:
+            # Verificar si la tabla existe
+            tablas = self.listar_tablas()
+            if 'tsalud' not in tablas:
+                print("❌ La tabla 'tsalud' no existe")
+                return []
+                
+            query = """
+            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
+                   medprev, condicionsalud, fecharev, observacionsalud, archivo
+            FROM tsalud 
+            ORDER BY fecharev DESC
+            """
+            cursor = self.ejecutar_consulta(query)
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ {len(resultados)} registros de salud obtenidos")
+                return resultados
+            return []
+        except Exception as e:
+            print(f"❌ Error en obtener_todos_registros_salud: {e}")
+            return []
+
+    def obtener_registros_salud_por_fecha(self, fecha_inicio, fecha_fin):
+        """Obtiene registros de salud por rango de fechas"""
+        try:
+            query = """
+            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
+                   medprev, condicionsalud, fecharev, observacionsalud, archivo
+            FROM tsalud 
+            WHERE fecharev BETWEEN ? AND ?
+            ORDER BY fecharev DESC
+            """
+            cursor = self.ejecutar_consulta(query, (fecha_inicio, fecha_fin))
+            if cursor:
+                return cursor.fetchall()
+            return []
+        except Exception as e:
+            print(f"❌ Error en obtener_registros_salud_por_fecha: {e}")
+            return []
+
+    def buscar_registros_salud(self, texto):
+        """Busca registros de salud por texto en múltiples campos"""
+        try:
+            query = """
+            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
+                   medprev, condicionsalud, fecharev, observacionsalud, archivo
+            FROM tsalud 
+            WHERE areteanimal LIKE ? OR nomvet LIKE ? OR procedimiento LIKE ? 
+               OR condicionsalud LIKE ? OR observacionsalud LIKE ? OR tipoanimal LIKE ?
+            ORDER BY fecharev DESC
+            """
+            like_text = f'%{texto}%'
+            cursor = self.ejecutar_consulta(query, (like_text, like_text, like_text, like_text, like_text, like_text))
+            if cursor:
+                return cursor.fetchall()
+            return []
+        except Exception as e:
+            print(f"❌ Error en buscar_registros_salud: {e}")
+            return []
+
+    def diagnostico_tabla_salud(self):
+        """Diagnóstico de la tabla tsalud"""
+        try:
+            print("\n🔍 DIAGNÓSTICO TABLA tsalud:")
+            
+            # Verificar si la tabla existe
+            tablas = self.listar_tablas()
+            print(f"📋 Tablas en la BD: {tablas}")
+            
+            if 'tsalud' not in tablas:
+                print("❌ ERROR: La tabla 'tsalud' no existe")
+                return False
+                
+            # Contar registros totales
+            query_count = "SELECT COUNT(*) FROM tsalud"
+            cursor_count = self.ejecutar_consulta(query_count)
+            if cursor_count:
+                total = cursor_count.fetchone()[0]
+                print(f"📊 Total de registros en tsalud: {total}")
+                
+            # Verificar algunos registros de ejemplo
+            query_ejemplo = "SELECT idsalud, areteanimal, procedimiento FROM tsalud LIMIT 3"
+            cursor_ejemplo = self.ejecutar_consulta(query_ejemplo)
+            if cursor_ejemplo:
+                ejemplos = cursor_ejemplo.fetchall()
+                print("📝 Ejemplos de registros en tsalud:")
+                for ej in ejemplos:
+                    print(f"   - ID: {ej[0]}, Arete: {ej[1]}, Procedimiento: {ej[2]}")
+            
+            return True
+                    
+        except Exception as e:
+            print(f"❌ Error en diagnóstico tabla salud: {e}")
             return False
-    except Exception as e:
-        print(f"🗑️ BD - Error en eliminar_usuario_por_id: {e}")
-        return False
+
+            # MÉTODOS PARA REPRODUCCIÓN (TREPROD)
+    def obtener_todos_registros_reproduccion(self):
+        """Obtiene todos los registros de la tabla treprod"""
+        try:
+            # Verificar si la tabla existe
+            tablas = self.listar_tablas()
+            if 'treprod' not in tablas:
+                print("❌ La tabla 'treprod' no existe")
+                return []
+                
+            query = """
+            SELECT idreprod, areteanimal, cargada, cantpartos, fservicioactual, 
+                   faproxparto, fnuevoservicio, tecnica, observacion
+            FROM treprod 
+            ORDER BY fservicioactual DESC
+            """
+            cursor = self.ejecutar_consulta(query)
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ {len(resultados)} registros de reproducción obtenidos")
+                return resultados
+            return []
+        except Exception as e:
+            print(f"❌ Error en obtener_todos_registros_reproduccion: {e}")
+            return []
+
+    def obtener_registros_reproduccion_por_arete(self, arete_animal: str):
+        """Obtiene registros de reproducción por arete"""
+        try:
+            print(f"🔍 BD - Buscando registros de reproducción para arete: '{arete_animal}'")
+            
+            if not arete_animal or arete_animal.strip() == "":
+                print("❌ BD - Arete vacío, retornando lista vacía")
+                return []
+            
+            query = """
+            SELECT idreprod, areteanimal, cargada, cantpartos, fservicioactual, 
+                   faproxparto, fnuevoservicio, tecnica, observacion
+            FROM treprod 
+            WHERE areteanimal = ?
+            ORDER BY fservicioactual DESC
+            """
+            cursor = self.ejecutar_consulta(query, (arete_animal.strip(),))
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} registros de reproducción encontrados para arete: '{arete_animal}'")
+                return resultados
+            return []
+        except Exception as e:
+            print(f"❌ BD - Error en obtener_registros_reproduccion_por_arete: {e}")
+            return []
+
+    def buscar_registros_reproduccion(self, texto):
+        """Busca registros de reproducción por texto"""
+        try:
+            query = """
+            SELECT idreprod, areteanimal, cargada, cantpartos, fservicioactual, 
+                   faproxparto, fnuevoservicio, tecnica, observacion
+            FROM treprod 
+            WHERE areteanimal LIKE ? OR tecnica LIKE ? OR observacion LIKE ?
+            ORDER BY fservicioactual DESC
+            """
+            like_text = f'%{texto}%'
+            cursor = self.ejecutar_consulta(query, (like_text, like_text, like_text))
+            if cursor:
+                return cursor.fetchall()
+            return []
+        except Exception as e:
+            print(f"❌ Error en buscar_registros_reproduccion: {e}")
+            return []
+
+    def obtener_registros_reproduccion_por_fecha(self, fecha_inicio, fecha_fin):
+        """Obtiene registros de reproducción por rango de fechas"""
+        try:
+            query = """
+            SELECT idreprod, areteanimal, cargada, cantpartos, fservicioactual, 
+                   faproxparto, fnuevoservicio, tecnica, observacion
+            FROM treprod 
+            WHERE fservicioactual BETWEEN ? AND ?
+            ORDER BY fservicioactual DESC
+            """
+            cursor = self.ejecutar_consulta(query, (fecha_inicio, fecha_fin))
+            if cursor:
+                return cursor.fetchall()
+            return []
+        except Exception as e:
+            print(f"❌ Error en obtener_registros_reproduccion_por_fecha: {e}")
+            return []
+
+    def diagnostico_tabla_reproduccion(self):
+        """Diagnóstico de la tabla treprod"""
+        try:
+            print("\n🔍 DIAGNÓSTICO TABLA treprod:")
+            
+            # Verificar si la tabla existe
+            tablas = self.listar_tablas()
+            print(f"📋 Tablas en la BD: {tablas}")
+            
+            if 'treprod' not in tablas:
+                print("❌ ERROR: La tabla 'treprod' no existe")
+                return False
+                
+            # Contar registros totales
+            query_count = "SELECT COUNT(*) FROM treprod"
+            cursor_count = self.ejecutar_consulta(query_count)
+            if cursor_count:
+                total = cursor_count.fetchone()[0]
+                print(f"📊 Total de registros en treprod: {total}")
+                
+            # Verificar algunos registros de ejemplo
+            query_ejemplo = "SELECT idreprod, areteanimal, fservicioactual FROM treprod LIMIT 3"
+            cursor_ejemplo = self.ejecutar_consulta(query_ejemplo)
+            if cursor_ejemplo:
+                ejemplos = cursor_ejemplo.fetchall()
+                print("📝 Ejemplos de registros en treprod:")
+                for ej in ejemplos:
+                    print(f"   - ID: {ej[0]}, Arete: {ej[1]}, Fecha Servicio: {ej[2]}")
+            
+            return True
+                    
+        except Exception as e:
+            print(f"❌ Error en diagnóstico tabla reproducción: {e}")
+            return False
+
+
+    def verificar_tabla_usuarios(self):
+        """Verifica si la tabla de usuarios existe y la crea si no, con la estructura correcta"""
+        try:
+            print("🔍 Verificando tabla de usuarios...")
+            
+            # Verificar si la tabla existe
+            query = "SELECT name FROM sqlite_master WHERE type='table' AND name='tusuarios'"
+            cursor = self.ejecutar_consulta(query)
+            
+            if cursor:
+                tabla_existe = cursor.fetchone() is not None
+                
+                if not tabla_existe:
+                    print("🔧 La tabla 'tusuarios' no existe, creándola...")
+                    query_crear = """
+                    CREATE TABLE tusuarios (
+                        idusuario INTEGER PRIMARY KEY AUTOINCREMENT,
+                        nombre TEXT NOT NULL,
+                        usuario TEXT UNIQUE NOT NULL,
+                        rol TEXT NOT NULL,
+                        telefono TEXT,
+                        pass TEXT NOT NULL
+                    )
+                    """
+                    cursor_crear = self.ejecutar_consulta(query_crear)
+                    if cursor_crear:
+                        print("✅ Tabla 'tusuarios' creada exitosamente")
+                        return True
+                    else:
+                        print("❌ Error al crear tabla 'tusuarios'")
+                        return False
+                else:
+                    print("✅ Tabla 'tusuarios' ya existe")
+                    # Verificar la estructura de la tabla
+                    return self.verificar_estructura_tusuarios()
+            else:
+                print("❌ Error al verificar existencia de tabla")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error verificando tabla usuarios: {e}")
+            return False
+
+    def verificar_estructura_tusuarios(self):
+        """Verifica que la tabla tusuarios tenga la estructura correcta"""
+        try:
+            print("🔍 Verificando estructura de tabla tusuarios...")
+            
+            query = "PRAGMA table_info(tusuarios)"
+            cursor = self.ejecutar_consulta(query)
+            
+            if cursor:
+                columnas = cursor.fetchall()
+                columnas_esperadas = ['idusuario', 'nombre', 'usuario', 'rol', 'telefono', 'pass']
+                columnas_actuales = [col[1] for col in columnas]
+                
+                print(f"📋 Columnas actuales: {columnas_actuales}")
+                print(f"📋 Columnas esperadas: {columnas_esperadas}")
+                
+                # Verificar que todas las columnas esperadas existan
+                for col_esperada in columnas_esperadas:
+                    if col_esperada not in columnas_actuales:
+                        print(f"❌ Columna faltante: {col_esperada}")
+                        return False
+                
+                print("✅ Estructura de tabla correcta")
+                return True
+            else:
+                print("❌ Error al obtener estructura de tabla")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error verificando estructura: {e}")
+            return False
+
+    def diagnostico_completo_usuarios(self):
+        """Diagnóstico completo de la tabla de usuarios"""
+        try:
+            print("\n🔍 DIAGNÓSTICO COMPLETO - TABLA USUARIOS:")
+            
+            # Verificar todas las tablas
+            tablas = self.listar_tablas()
+            print(f"📋 Tablas en la BD: {tablas}")
+            
+            if 'tusuarios' in tablas:
+                print("✅ La tabla 'tusuarios' existe")
+                
+                # Verificar estructura
+                query_estructura = "PRAGMA table_info(tusuarios)"
+                cursor_estructura = self.ejecutar_consulta(query_estructura)
+                if cursor_estructura:
+                    columnas = cursor_estructura.fetchall()
+                    print("📋 Estructura de la tabla:")
+                    for col in columnas:
+                        print(f"   - {col[1]} ({col[2]})")
+                
+                # Verificar usuarios existentes
+                query_usuarios = "SELECT idusuario, usuario, nombre, rol FROM tusuarios"
+                cursor_usuarios = self.ejecutar_consulta(query_usuarios)
+                if cursor_usuarios:
+                    usuarios = cursor_usuarios.fetchall()
+                    print(f"👥 Usuarios en la tabla ({len(usuarios)}):")
+                    for usuario in usuarios:
+                        print(f"   - ID: {usuario[0]}, Usuario: {usuario[1]}, Nombre: {usuario[2]}, Rol: {usuario[3]}")
+                        
+                    if len(usuarios) == 0:
+                        print("⚠️  No hay usuarios en la tabla. Debes crear al menos un usuario.")
+            else:
+                print("❌ La tabla 'tusuarios' NO existe")
+                 
+        except Exception as e:
+            print(f"❌ Error en diagnóstico: {e}")
+
+            # MÉTODOS PARA USUARIOS (TEXTO PLANO)
+    def obtener_usuarios(self) -> List[Tuple]:
+        """Obtiene todos los usuarios de la tabla tusuarios"""
+        try:
+            print("🔍 BD - Ejecutando consulta para obtener usuarios...")
+            query = """
+            SELECT idusuario, usuario, nombre, telefono, rol
+            FROM tusuarios
+            ORDER BY idusuario DESC
+            """
+            cursor = self.ejecutar_consulta(query)
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} usuarios obtenidos")
+                return resultados
+            else:
+                print("❌ BD - Error: cursor es None en obtener_usuarios")
+                return []
+        except Exception as e:
+            print(f"❌ BD - Error en obtener_usuarios: {e}")
+            return []
+
+    def obtener_usuario_por_nombre(self, usuario: str) -> Optional[Tuple]:
+        """Obtiene un usuario por su nombre de usuario"""
+        try:
+            query = "SELECT idusuario, usuario, nombre, telefono, rol FROM tusuarios WHERE usuario = ?"
+            cursor = self.ejecutar_consulta(query, (usuario,))
+            if cursor:
+                resultado = cursor.fetchone()
+                if resultado:
+                    print(f"✅ Usuario encontrado: {resultado[1]}")
+                else:
+                    print(f"ℹ️  Usuario no encontrado: {usuario}")
+                return resultado
+            return None
+        except Exception as e:
+            print(f"❌ Error en obtener_usuario_por_nombre: {e}")
+            return None
+
+    def insertar_usuario(self, usuario: str, nombre: str, telefono: str, contrasena: str, rol: str) -> bool:
+        """Inserta un nuevo usuario en la tabla tusuarios (contraseña en texto plano)"""
+        try:
+            query = """
+            INSERT INTO tusuarios (usuario, nombre, telefono, pass, rol)
+            VALUES (?, ?, ?, ?, ?)
+            """
+            params = (usuario, nombre, telefono, contrasena, rol)
+            cursor = self.ejecutar_consulta(query, params)
+            
+            if cursor:
+                print(f"✅ Usuario insertado correctamente: {nombre} - {usuario}")
+                return True
+            else:
+                print(f"❌ Error al insertar usuario: {nombre} - {usuario}")
+                return False
+        except Exception as e:
+            print(f"❌ Error al insertar usuario: {e}")
+            return False
+
+    def buscar_usuarios_por_nombre(self, nombre: str) -> List[Tuple]:
+        """Busca usuarios por nombre"""
+        try:
+            query = """
+            SELECT idusuario, usuario, nombre, telefono, rol
+            FROM tusuarios
+            WHERE nombre LIKE ? OR usuario LIKE ?
+            ORDER BY idusuario DESC
+            """
+            cursor = self.ejecutar_consulta(query, (f'%{nombre}%', f'%{nombre}%'))
+            if cursor:
+                return cursor.fetchall()
+            return []
+        except Exception as e:
+            print(f"❌ Error en buscar_usuarios_por_nombre: {e}")
+            return []
+
+    def eliminar_usuario_por_id(self, id_usuario: int) -> bool:
+        """Elimina un usuario por su ID"""
+        try:
+            query = "DELETE FROM tusuarios WHERE idusuario = ?"
+            cursor = self.ejecutar_consulta(query, (id_usuario,))
+            
+            if cursor:
+                filas_afectadas = cursor.rowcount
+                print(f"🗑️ BD - Usuario eliminado. Filas afectadas: {filas_afectadas}")
+                return filas_afectadas > 0
+            else:
+                print("🗑️ BD - Error: cursor es None")
+                return False
+        except Exception as e:
+            print(f"🗑️ BD - Error en eliminar_usuario_por_id: {e}")
+            return False
+
+    def verificar_credenciales(self, usuario: str, password: str) -> Optional[Tuple]:
+        """Verifica las credenciales de un usuario (para login) - CONTRASEÑA EN TEXTO PLANO"""
+        try:
+            print(f"🔐 Verificando credenciales para usuario: {usuario}")
+            
+            query = "SELECT idusuario, usuario, nombre, rol FROM tusuarios WHERE usuario = ? AND pass = ?"
+            cursor = self.ejecutar_consulta(query, (usuario, password))
+            
+            if cursor:
+                resultado = cursor.fetchone()
+                if resultado:
+                    print(f"✅ Credenciales válidas para: {usuario}")
+                    return resultado
+                else:
+                    print(f"❌ Credenciales inválidas para: {usuario}")
+                    # Debug: verificar si el usuario existe pero la contraseña es incorrecta
+                    query_usuario = "SELECT usuario, pass FROM tusuarios WHERE usuario = ?"
+                    cursor_usuario = self.ejecutar_consulta(query_usuario, (usuario,))
+                    if cursor_usuario:
+                        usuario_data = cursor_usuario.fetchone()
+                        if usuario_data:
+                            print(f"🔍 Usuario existe pero contraseña no coincide")
+                            print(f"🔍 Contraseña en BD: '{usuario_data[1]}'")
+                            print(f"🔍 Contraseña ingresada: '{password}'")
+                        else:
+                            print(f"🔍 Usuario no existe: {usuario}")
+                return None
+            return None
+        except Exception as e:
+            print(f"❌ Error verificando credenciales: {e}")
+            return None
+
+    def verificar_tabla_usuarios(self):
+        """Verifica si la tabla de usuarios existe y la crea si no (sin usuario por defecto)"""
+        try:
+            print("🔍 Verificando tabla de usuarios...")
+            
+            # Verificar si la tabla existe
+            query = "SELECT name FROM sqlite_master WHERE type='table' AND name='tusuarios'"
+            cursor = self.ejecutar_consulta(query)
+            
+            if cursor:
+                tabla_existe = cursor.fetchone() is not None
+                
+                if not tabla_existe:
+                    print("🔧 La tabla 'tusuarios' no existe, creándola...")
+                    query_crear = """
+                    CREATE TABLE tusuarios (
+                        idusuario INTEGER PRIMARY KEY AUTOINCREMENT,
+                        nombre TEXT NOT NULL,
+                        usuario TEXT UNIQUE NOT NULL,
+                        rol TEXT NOT NULL,
+                        telefono TEXT,
+                        pass TEXT NOT NULL
+                    )
+                    """
+                    cursor_crear = self.ejecutar_consulta(query_crear)
+                    if cursor_crear:
+                        print("✅ Tabla 'tusuarios' creada exitosamente")
+                        return True
+                    else:
+                        print("❌ Error al crear tabla 'tusuarios'")
+                        return False
+                else:
+                    print("✅ Tabla 'tusuarios' ya existe")
+                    # Verificar la estructura de la tabla
+                    return self.verificar_estructura_tusuarios()
+            else:
+                print("❌ Error al verificar existencia de tabla")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error verificando tabla usuarios: {e}")
+            return False
+
+    def obtener_usuario_por_id(self, id_usuario: int) -> Optional[Tuple]:
+        """Obtiene un usuario por su ID"""
+        try:
+            query = "SELECT idusuario, usuario, nombre, telefono, rol FROM tusuarios WHERE idusuario = ?"
+            cursor = self.ejecutar_consulta(query, (id_usuario,))
+            if cursor:
+                resultado = cursor.fetchone()
+                if resultado:
+                    print(f"✅ Usuario encontrado por ID: {resultado[1]}")
+                return resultado
+            return None
+        except Exception as e:
+            print(f"❌ Error en obtener_usuario_por_id: {e}")
+            return None
+
+    def actualizar_usuario(self, id_usuario: int, usuario: str, nombre: str, telefono: str, 
+                          contrasena: str = None, rol: str = None) -> bool:
+        """Actualiza un usuario en la base de datos (contraseña en texto plano)"""
+        try:
+            if contrasena:
+                # Actualizar incluyendo contraseña
+                query = """
+                UPDATE tusuarios 
+                SET usuario = ?, nombre = ?, telefono = ?, pass = ?, rol = ?
+                WHERE idusuario = ?
+                """
+                params = (usuario, nombre, telefono, contrasena, rol, id_usuario)
+            else:
+                # Actualizar sin cambiar contraseña
+                query = """
+                UPDATE tusuarios 
+                SET usuario = ?, nombre = ?, telefono = ?, rol = ?
+                WHERE idusuario = ?
+                """
+                params = (usuario, nombre, telefono, rol, id_usuario)
+            
+            cursor = self.ejecutar_consulta(query, params)
+            
+            if cursor:
+                print(f"✅ Usuario actualizado correctamente ID {id_usuario}: {nombre}")
+                return True
+            else:
+                print(f"❌ Error al actualizar usuario ID {id_usuario}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error en actualizar_usuario: {e}")
+            return False
+
+    def diagnostico_completo_usuarios(self):
+        """Diagnóstico completo de la tabla de usuarios"""
+        try:
+            print("\n🔍 DIAGNÓSTICO COMPLETO - TABLA USUARIOS:")
+            
+            # Verificar todas las tablas
+            tablas = self.listar_tablas()
+            print(f"📋 Tablas en la BD: {tablas}")
+            
+            if 'tusuarios' in tablas:
+                print("✅ La tabla 'tusuarios' existe")
+                
+                # Verificar estructura
+                query_estructura = "PRAGMA table_info(tusuarios)"
+                cursor_estructura = self.ejecutar_consulta(query_estructura)
+                if cursor_estructura:
+                    columnas = cursor_estructura.fetchall()
+                    print("📋 Estructura de la tabla:")
+                    for col in columnas:
+                        print(f"   - {col[1]} ({col[2]})")
+                
+                # Verificar usuarios existentes con contraseñas
+                query_usuarios = "SELECT idusuario, usuario, nombre, rol, pass FROM tusuarios"
+                cursor_usuarios = self.ejecutar_consulta(query_usuarios)
+                if cursor_usuarios:
+                    usuarios = cursor_usuarios.fetchall()
+                    print(f"👥 Usuarios en la tabla ({len(usuarios)}):")
+                    for usuario in usuarios:
+                        print(f"   - ID: {usuario[0]}, Usuario: {usuario[1]}, Nombre: {usuario[2]}, Rol: {usuario[3]}, Pass: '{usuario[4]}'")
+                        
+                    if len(usuarios) == 0:
+                        print("⚠️  No hay usuarios en la tabla. Debes crear al menos un usuario.")
+            else:
+                print("❌ La tabla 'tusuarios' NO existe")
+                
+        except Exception as e:
+            print(f"❌ Error en diagnóstico: {e}")
+# En tu database.py, agrega este método para actualizar la tabla de bitácora
+
+    def actualizar_tabla_bitacora(self):
+        """Actualizar la tabla de bitácora con las columnas necesarias"""
+        try:
+            print("🔧 Actualizando estructura de tabla bitácora...")
+            
+            # Verificar si la tabla existe y obtener su estructura
+            query = "PRAGMA table_info(tbitacora)"
+            cursor = self.ejecutar_consulta(query)
+            
+            if not cursor:
+                print("❌ No se puede acceder a la estructura de tbitacora (cursor es None)")
+                return False
+            
+            columnas = cursor.fetchall()
+            columnas_existentes = [col[1] for col in columnas]
+            
+            # Agregar columna arete_afectado si no existe
+            if 'arete_afectado' not in columnas_existentes:
+                print("🔧 Agregando columna 'arete_afectado' a tbitacora...")
+                query_alter = "ALTER TABLE tbitacora ADD COLUMN arete_afectado TEXT"
+                cursor_alter = self.ejecutar_consulta(query_alter)
+                if cursor_alter:
+                    print("✅ Columna 'arete_afectado' agregada correctamente")
+                else:
+                    print("❌ Error al agregar columna 'arete_afectado'")
+            
+            # También verificar otras columnas que puedan faltar
+            columnas_necesarias = ['fecha', 'usuario', 'modulo', 'accion', 'descripcion', 'detalles', 'arete_afectado']
+            
+            for columna in columnas_necesarias:
+                if columna not in columnas_existentes:
+                    print(f"🔧 Agregando columna '{columna}' a tbitacora...")
+                    query_alter = f"ALTER TABLE tbitacora ADD COLUMN {columna} TEXT"
+                    cursor_alter = self.ejecutar_consulta(query_alter)
+                    if cursor_alter:
+                        print(f"✅ Columna '{columna}' agregada correctamente")
+                    else:
+                        print(f"❌ Error al agregar columna '{columna}'")
+            
+            return True
+        except Exception as e:
+            print(f"❌ Error actualizando tabla bitácora: {e}")
+            return False
+   
+   

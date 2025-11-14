@@ -1,19 +1,25 @@
-# propietarios_controller.py - VERSIÓN ACTUALIZADA CON FOTOS Y OBSERVACIONES
+# propietarios_controller.py - VERSIÓN ACTUALIZADA CON BITÁCORA
 from PyQt5 import QtCore, QtGui, QtWidgets
 from database import Database
 from controllers.Apropietarios import AgregarPropietarioController
 from controllers.Epropietarios import EditarPropietarioController
 
 class PropietariosController:
-    def __init__(self, propietarios_widget):
+    def __init__(self, propietarios_widget, bitacora_controller=None):
         self.propietarios_widget = propietarios_widget
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         self.setup_connections()
         self.configurar_tabla()
         print("✅ PropietariosController inicializado correctamente")
         
         # Cargar datos automáticamente al iniciar
         self.cargar_propietarios()
+
+    def set_bitacora_controller(self, bitacora_controller):
+        """Establecer el controlador de bitácora"""
+        self.bitacora_controller = bitacora_controller
+        print("✅ Bitácora asignada a PropietariosController")
         
     def setup_connections(self):
         """Configura las conexiones de los botones y señales"""
@@ -375,7 +381,7 @@ class PropietariosController:
                         layout.addWidget(label_info)
                 
                     # Label para la foto
-                    label_foto = QtWidgets.QLabel()
+                    label_foto = QtWidgets.QQLabel()
                     label_foto.setAlignment(QtCore.Qt.AlignCenter)
                     label_foto.setPixmap(pixmap.scaled(500, 500, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
                     
@@ -556,7 +562,11 @@ class PropietariosController:
         """Abre diálogo para agregar nuevo propietario"""
         try:
             print("📝 Abriendo diálogo para agregar propietario...")
-            dialog = AgregarPropietarioController(self.propietarios_widget)
+            # ✅ PASAR BITÁCORA AL DIÁLOGO
+            dialog = AgregarPropietarioController(
+                parent=self.propietarios_widget, 
+                bitacora_controller=self.bitacora_controller
+            )
             resultado = dialog.exec_()
             
             if resultado == QtWidgets.QDialog.Accepted:
@@ -586,10 +596,26 @@ class PropietariosController:
                      'foto': propietario_data.get('foto', None)
                 }
                 print(f"🎯 Enviando datos al editor: {datos_completos}")
-                dialog = EditarPropietarioController(propietario_data=datos_completos, parent=self.propietarios_widget)
+                # ✅ PASAR BITÁCORA AL DIÁLOGO DE EDICIÓN
+                dialog = EditarPropietarioController(
+                    propietario_data=datos_completos, 
+                    parent=self.propietarios_widget,
+                    bitacora_controller=self.bitacora_controller
+                )
                 resultado = dialog.exec_()
                 
                 if resultado == QtWidgets.QDialog.Accepted:
+                    # ✅ REGISTRAR EN BITÁCORA LA EDICIÓN
+                    if self.bitacora_controller:
+                        cambios = f"Propietario editado - ID: {id_propietario}, Nombre: {propietario_data.get('nombre', '')}"
+                        self.bitacora_controller.registrar_accion(
+                            modulo="Propietarios",
+                            accion="ACTUALIZAR",
+                            descripcion="Edición de datos de propietario",
+                            detalles=cambios
+                        )
+                        print("✅ Edición registrada en bitácora")
+                    
                     self.cargar_propietarios()
                     print("✅ Propietario actualizado")
             else:
@@ -615,6 +641,16 @@ class PropietariosController:
             )
             
             if respuesta == QtWidgets.QMessageBox.Yes:
+                # ✅ REGISTRAR EN BITÁCORA ANTES DE ELIMINAR
+                if self.bitacora_controller:
+                    self.bitacora_controller.registrar_accion(
+                        modulo="Propietarios",
+                        accion="ELIMINAR",
+                        descripcion="Eliminación de propietario",
+                        detalles=f"ID: {id_propietario}, Nombre: {nombre_propietario}"
+                    )
+                    print("✅ Eliminación registrada en bitácora")
+                
                 resultado = self.db.eliminar_propietario_por_id(id_propietario)
                 
                 if resultado:

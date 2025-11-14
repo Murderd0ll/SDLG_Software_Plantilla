@@ -1,15 +1,22 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from database import Database
-import os
+from controllers.agregarusuario_controller import AgregarUsuarioController
+from controllers.editarusuario_controller import EditarUsuarioController
 
 class UsuariosController:
-    def __init__(self, usuarios_widget):
+    def __init__(self, usuarios_widget, bitacora_controller=None):
         self.usuarios_widget = usuarios_widget
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         self.setup_connections()
         self.configurar_tabla()
         self.cargar_usuarios()
         print("✅ UsuariosController inicializado correctamente")
+        
+    def set_bitacora_controller(self, bitacora_controller):
+        """Establecer el controlador de bitácora"""
+        self.bitacora_controller = bitacora_controller
+        print("✅ Bitácora asignada a UsuariosController")
         
     def setup_connections(self):
         """Configura las conexiones de los botones y señales"""
@@ -86,13 +93,17 @@ class UsuariosController:
     def configurar_tabla(self):
         """Configura el aspecto y comportamiento de la tabla"""
         try:
-            # Configurar tamaños de columnas
-            self.tabla.setColumnWidth(0, 60)   # ID
-            self.tabla.setColumnWidth(1, 120)  # Usuario
-            self.tabla.setColumnWidth(2, 150)  # Nombre
-            self.tabla.setColumnWidth(3, 100)  # Teléfono
-            self.tabla.setColumnWidth(4, 80)   # Rol
-            self.tabla.setColumnWidth(5, 120)  # Opciones
+            # Configurar encabezados (sin ID)
+            encabezados = ["Usuario", "Nombre", "Teléfono", "Rol", "Opciones"]
+            self.tabla.setColumnCount(len(encabezados))
+            self.tabla.setHorizontalHeaderLabels(encabezados)
+            
+            # Configurar tamaños de columnas (sin ID)
+            self.tabla.setColumnWidth(0, 120)  # Usuario
+            self.tabla.setColumnWidth(1, 150)  # Nombre
+            self.tabla.setColumnWidth(2, 100)  # Teléfono
+            self.tabla.setColumnWidth(3, 100)  # Rol
+            self.tabla.setColumnWidth(4, 120)  # Opciones
             
             # Configurar altura de filas
             self.tabla.verticalHeader().setDefaultSectionSize(40)
@@ -102,6 +113,48 @@ class UsuariosController:
             self.tabla.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
             self.tabla.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
             self.tabla.verticalHeader().setVisible(False)
+            self.tabla.setSortingEnabled(True)
+            
+            # Mejorar estilo
+            self.tabla.setStyleSheet("""
+                QTableWidget {
+                    background-color: white;
+                    alternate-background-color: #f8f9fa;
+                    gridline-color: #dee2e6;
+                    border: 1px solid #dee2e6;
+                    border-radius: 4px;
+                }
+                QTableWidget::item {
+                    padding: 5px;
+                    border-bottom: 1px solid #dee2e6;
+                }
+                QTableWidget::item:selected {
+                    background-color: #3498db;
+                    color: white;
+                }
+            """)
+            
+            # Estilo de encabezados
+            self.tabla.horizontalHeader().setStyleSheet("""
+                QHeaderView::section {
+                    background-color: #34495e;
+                    color: white;
+                    padding: 8px;
+                    border: none;
+                    font-weight: bold;
+                    font-size: 12px;
+                }
+                QHeaderView::section:first {
+                    border-top-left-radius: 4px;
+                }
+                QHeaderView::section:last {
+                    border-top-right-radius: 4px;
+                }
+            """)
+            
+            # Hacer que la última columna (Opciones) se expanda
+            header = self.tabla.horizontalHeader()
+            header.setStretchLastSection(False)
             
             print("✅ Tabla de usuarios configurada correctamente")
             
@@ -121,28 +174,36 @@ class UsuariosController:
             traceback.print_exc()
     
     def llenar_tabla(self, usuarios):
-        """Llena la tabla con los datos de los usuarios"""
+        """Llena la tabla con los datos de los usuarios (sin ID)"""
         try:
             self.tabla.setRowCount(0)
 
             for row_number, usuario in enumerate(usuarios):
                 self.tabla.insertRow(row_number)
                 
-                # Llenar datos
-                for col in range(min(5, len(usuario))):  # Solo las primeras 5 columnas de datos
-                    valor = usuario[col] if usuario[col] is not None else ""
-                    
-                    # Ocultar contraseña por seguridad
-                    if col == 3:  # Asumiendo que la columna 3 es contraseña
-                        valor = "••••••••"
-                    
-                    item = QtWidgets.QTableWidgetItem(str(valor))
-                    self.tabla.setItem(row_number, col, item)
+                # Los datos vienen en este orden: [idusuario, usuario, nombre, telefono, rol]
+                # Pero ahora solo mostramos: [usuario, nombre, telefono, rol, opciones]
                 
-                # Botones de opciones
-                self.agregar_botones_opciones(row_number, 5, str(usuario[0]))  # usuario[0] es el ID
+                # Usuario (columna 0)
+                item_usuario = QtWidgets.QTableWidgetItem(str(usuario[1] if usuario[1] else ""))
+                self.tabla.setItem(row_number, 0, item_usuario)
+                
+                # Nombre (columna 1)
+                item_nombre = QtWidgets.QTableWidgetItem(str(usuario[2] if usuario[2] else ""))
+                self.tabla.setItem(row_number, 1, item_nombre)
+                
+                # Teléfono (columna 2)
+                item_telefono = QtWidgets.QTableWidgetItem(str(usuario[3] if usuario[3] else ""))
+                self.tabla.setItem(row_number, 2, item_telefono)
+                
+                # Rol (columna 3)
+                item_rol = QtWidgets.QTableWidgetItem(str(usuario[4] if usuario[4] else ""))
+                self.tabla.setItem(row_number, 3, item_rol)
+                
+                # Botones de opciones (columna 4) - guardamos el ID internamente
+                self.agregar_botones_opciones(row_number, 4, str(usuario[0]))  # usuario[0] es el ID
 
-            print(f"✅ Tabla llenada con {len(usuarios)} registros")
+            print(f"✅ Tabla llenada con {len(usuarios)} registros (ID oculto)")
 
         except Exception as e:
             print(f"❌ Error al llenar tabla: {e}")
@@ -202,51 +263,104 @@ class UsuariosController:
         """Abre diálogo para agregar nuevo usuario"""
         try:
             print("📝 Abriendo diálogo para agregar usuario...")
-            self.mostrar_mensaje_temporal(
-                "Agregar Usuario", 
-                "Funcionalidad de agregar usuario en desarrollo...",
-                QtGui.QPixmap(":/icons/img/icons/agregar.png")
-            )
             
+            # ✅ PASAR BITÁCORA AL DIÁLOGO
+            dialog = AgregarUsuarioController(
+                parent=self.usuarios_widget,
+                bitacora_controller=self.bitacora_controller
+            )
+            resultado = dialog.exec_()
+            
+            # Si se guardó correctamente, recargar la tabla
+            if resultado == QtWidgets.QDialog.Accepted:
+                self.cargar_usuarios()
+                print("✅ Usuario agregado, tabla actualizada")
+                
         except Exception as e:
             print(f"❌ Error al abrir diálogo de agregar: {e}")
             import traceback
             traceback.print_exc()
+            QtWidgets.QMessageBox.critical(
+                self.usuarios_widget, 
+                "Error", 
+                f"No se pudo abrir el formulario: {str(e)}"
+            )
     
     def editar_usuario(self, id_usuario):
         """Abre diálogo para editar usuario existente"""
         try:
             print(f"✏️ Editando usuario con ID: {id_usuario}")
-            self.mostrar_mensaje_temporal(
-                "Editar Usuario", 
-                f"Funcionalidad de editar usuario en desarrollo...\nID: {id_usuario}",
-                QtGui.QPixmap(":/icons/img/icons/editar.png")
-            )
             
+            # ✅ PASAR BITÁCORA AL DIÁLOGO
+            dialog = EditarUsuarioController(
+                id_usuario=id_usuario, 
+                parent=self.usuarios_widget,
+                bitacora_controller=self.bitacora_controller
+            )
+            resultado = dialog.exec_()
+            
+            # Si se guardó correctamente, recargar la tabla
+            if resultado == QtWidgets.QDialog.Accepted:
+                # ✅ REGISTRAR EN BITÁCORA LA EDICIÓN
+                if self.bitacora_controller:
+                    usuario_data = self.db.obtener_usuario_por_id(id_usuario)
+                    if usuario_data:
+                        nombre_usuario = usuario_data[1] if len(usuario_data) > 1 else "N/A"
+                        cambios = f"Usuario editado - ID: {id_usuario}, Usuario: {nombre_usuario}"
+                        self.bitacora_controller.registrar_accion(
+                            modulo="Usuarios",
+                            accion="ACTUALIZAR",
+                            descripcion="Edición de datos de usuario",
+                            detalles=cambios
+                        )
+                        print("✅ Edición registrada en bitácora")
+                
+                self.cargar_usuarios()
+                print("✅ Usuario actualizado, tabla actualizada")
+                
         except Exception as e:
             print(f"❌ Error al editar usuario: {e}")
             import traceback
             traceback.print_exc()
+            QtWidgets.QMessageBox.critical(
+                self.usuarios_widget, 
+                "Error", 
+                f"No se pudo abrir el formulario de edición: {str(e)}"
+            )
     
     def eliminar_usuario(self, id_usuario):
         """Elimina un usuario después de confirmación"""
         try:
+            # Obtener información del usuario para mostrar en el mensaje
+            usuario_data = self.db.obtener_usuario_por_id(id_usuario)
+            nombre_usuario = usuario_data[1] if usuario_data and len(usuario_data) > 1 else "este usuario"
+            
             respuesta = QtWidgets.QMessageBox.question(
                 self.usuarios_widget, 
                 "Confirmar eliminación", 
-                f"¿Estás seguro de que quieres eliminar el usuario con ID {id_usuario}?",
+                f"¿Estás seguro de que quieres eliminar al usuario '{nombre_usuario}'?",
                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                 QtWidgets.QMessageBox.No
             )
             
             if respuesta == QtWidgets.QMessageBox.Yes:
+                # ✅ REGISTRAR EN BITÁCORA ANTES DE ELIMINAR
+                if self.bitacora_controller:
+                    self.bitacora_controller.registrar_accion(
+                        modulo="Usuarios",
+                        accion="ELIMINAR",
+                        descripcion="Eliminación de usuario",
+                        detalles=f"ID: {id_usuario}, Usuario: {nombre_usuario}"
+                    )
+                    print("✅ Eliminación registrada en bitácora")
+                
                 resultado = self.db.eliminar_usuario_por_id(id_usuario)
                 
                 if resultado:
                     QtWidgets.QMessageBox.information(
                         self.usuarios_widget, 
                         "Éxito", 
-                        "Usuario eliminado correctamente"
+                        f"Usuario '{nombre_usuario}' eliminado correctamente"
                     )
                     self.cargar_usuarios()
                 else:

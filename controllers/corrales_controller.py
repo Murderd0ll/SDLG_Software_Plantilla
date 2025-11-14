@@ -5,14 +5,20 @@ from controllers.Acorrales import AgregarCorralController
 from controllers.Ecorrales import EditarCorralController
 
 class CorralesController:
-    def __init__(self, corrales_widget):
+    def __init__(self, corrales_widget, bitacora_controller=None):
         self.corrales_widget = corrales_widget
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         self.setup_connections()
         self.configurar_tabla()
         self.cargar_corrales()  # Cargar datos al inicializar
         print("✅ CorralesController inicializado correctamente")
-        
+    
+    def set_bitacora_controller(self, bitacora_controller):
+        """Establecer el controlador de bitácora"""
+        self.bitacora_controller = bitacora_controller
+        print("✅ Bitácora asignada a CorralesController")
+
     def setup_connections(self):
         """Configura las conexiones de los botones y señales"""
         try:
@@ -210,7 +216,8 @@ class CorralesController:
         """Abre diálogo para agregar nuevo corral"""
         try:
             print("📝 Abriendo diálogo para agregar corral...")
-            dialog = AgregarCorralController(self.corrales_widget)
+            dialog = AgregarCorralController(parent=self.corrales_widget, 
+                bitacora_controller=self.bitacora_controller)
             resultado = dialog.exec_()
             
             if resultado == QtWidgets.QDialog.Accepted:
@@ -227,13 +234,11 @@ class CorralesController:
         try:
             print(f"✏️ Editando corral con ID: {id_corral}")
             
-            # CORREGIDO: Usar el método que devuelve diccionario
             corral_data = self.db.obtener_corral_por_id_dict(id_corral)
             
             if corral_data:
                 print(f"📄 Datos del corral obtenidos: {corral_data}")
                 
-                # Asegurarnos de que tenemos todos los campos necesarios
                 datos_completos = {
                     'identificador': corral_data.get('identificador', ''),
                     'nombre': corral_data.get('nombre', ''),
@@ -247,10 +252,26 @@ class CorralesController:
                 
                 print(f"🎯 Enviando datos al editor: {datos_completos}")
                 
-                dialog = EditarCorralController(corral_data=datos_completos, parent=self.corrales_widget)
+                # ✅ PASAR BITÁCORA AL DIÁLOGO DE EDICIÓN
+                dialog = EditarCorralController(
+                    corral_data=datos_completos, 
+                    parent=self.corrales_widget,
+                    bitacora_controller=self.bitacora_controller
+                )
                 resultado = dialog.exec_()
                 
                 if resultado == QtWidgets.QDialog.Accepted:
+                    # ✅ REGISTRAR EN BITÁCORA LA EDICIÓN
+                    if self.bitacora_controller:
+                        cambios = f"Corral editado - ID: {id_corral}, Nombre: {corral_data.get('nombre', '')}"
+                        self.bitacora_controller.registrar_accion(
+                            modulo="Corrales",
+                            accion="ACTUALIZAR",
+                            descripcion="Edición de datos de corral",
+                            detalles=cambios
+                        )
+                        print("✅ Edición registrada en bitácora")
+                    
                     self.cargar_corrales()
                     print("✅ Corral actualizado")
             else:
@@ -265,11 +286,6 @@ class CorralesController:
             print(f"❌ Error al editar corral: {e}")
             import traceback
             traceback.print_exc()
-            QtWidgets.QMessageBox.critical(
-                self.corrales_widget,
-                "Error",
-                f"Error al abrir editor: {str(e)}"
-            )
     
     def eliminar_corral(self, id_corral):
         """Elimina un corral después de confirmación"""
@@ -287,6 +303,16 @@ class CorralesController:
             )
             
             if respuesta == QtWidgets.QMessageBox.Yes:
+                # ✅ REGISTRAR EN BITÁCORA ANTES DE ELIMINAR
+                if self.bitacora_controller:
+                    self.bitacora_controller.registrar_accion(
+                        modulo="Corrales",
+                        accion="ELIMINAR",
+                        descripcion="Eliminación de corral",
+                        detalles=f"ID: {id_corral}, Nombre: {nombre_corral}"
+                    )
+                    print("✅ Eliminación registrada en bitácora")
+                
                 resultado = self.db.eliminar_corral_por_id(id_corral)
                 
                 if resultado:

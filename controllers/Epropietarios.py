@@ -5,11 +5,12 @@ import os
 from pathlib import Path
 
 class EditarPropietarioController(QtWidgets.QDialog):
-    def __init__(self, propietario_data=None, parent=None):
+    def __init__(self, propietario_data=None, parent=None, bitacora_controller=None):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         
         # Variable para almacenar la foto
         self.foto_data = None

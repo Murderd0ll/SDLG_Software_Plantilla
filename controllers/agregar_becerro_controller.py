@@ -5,11 +5,12 @@ import os
 from pathlib import Path
 
 class AgregarBecerroController(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, bitacora_controller=None):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         
         # Variable para almacenar la foto
         self.foto_data = None
@@ -19,6 +20,9 @@ class AgregarBecerroController(QtWidgets.QDialog):
         self.configurar_combobox()
         self.cargar_datos_combo()
         self.verificar_widgets()  # Para debug
+        
+        # Diagnóstico inmediato de bitácora
+        self.diagnostico_bitacora_avanzado()
         
     def verificar_widgets(self):
         """Función temporal para verificar que todos los widgets existen"""
@@ -258,12 +262,109 @@ class AgregarBecerroController(QtWidgets.QDialog):
         except Exception as e:
             print(f"❌ Error en validación: {e}")
             return False
+
+    def diagnostico_bitacora_avanzado(self):
+        """Diagnóstico avanzado del controlador de bitácora"""
+        try:
+            print("\n🔍 DIAGNÓSTICO AVANZADO BITÁCORA:")
+            print(f"✅ Controlador de bitácora presente: {self.bitacora_controller is not None}")
+            
+            if self.bitacora_controller:
+                print(f"✅ Tipo: {type(self.bitacora_controller)}")
+                print(f"✅ Usuario actual: {getattr(self.bitacora_controller, 'usuario_actual', 'NO TIENE')}")
+                
+                # Verificar métodos disponibles
+                metodos = ['registrar_accion', 'registrar_alta_becerro']
+                for metodo in metodos:
+                    if hasattr(self.bitacora_controller, metodo):
+                        print(f"✅ Método {metodo}: DISPONIBLE")
+                    else:
+                        print(f"❌ Método {metodo}: NO DISPONIBLE")
+                
+                # Probar registro directo
+                print("🧪 Probando registro directo...")
+                resultado = self.bitacora_controller.registrar_accion(
+                    modulo="Becerros",
+                    accion="PRUEBA_DIAGNOSTICO",
+                    descripcion="Prueba de diagnóstico desde AgregarBecerro",
+                    detalles="Este es un registro de prueba",
+                    arete_afectado="TEST_123"
+                )
+                print(f"✅ Resultado prueba: {resultado}")
+                
+            else:
+                print("❌ NO hay controlador de bitácora")
+                print("💡 Posibles causas:")
+                print("   - No se pasó al crear el diálogo")
+                print("   - El controlador padre no tiene bitácora")
+                print("   - Hay un error en la inicialización")
+                
+        except Exception as e:
+            print(f"❌ Error en diagnóstico avanzado: {e}")
+
+    def registrar_accion_bitacora_completo(self, arete, nombre, peso, sexo, raza, corral):
+        """Intentar registrar la acción en bitácora de múltiples formas"""
+        try:
+            if not self.bitacora_controller:
+                print("❌ No hay controlador de bitácora para registrar")
+                return False
+            
+            datos_becerro = f"Nombre: {nombre}, Arete: {arete}, Peso: {peso}kg, Sexo: {sexo}, Raza: {raza}, Corral: {corral}"
+            
+            # MÉTODO 1: Usar el método específico
+            print("🔄 Intentando registro con método específico...")
+
+            resultado = self.bitacora_controller.registrar_accion(
+                modulo="Becerros",
+                accion="ALTA",
+                descripcion=f"Alta de nuevo becerro: {nombre}",
+                detalles=datos_becerro,
+                arete_afectado=arete
+            )
+
+            print(f"✅ Resultado registro bitácora: {resultado}")
+
+            self.verificar_ultimo_registro_bitacora()
+        
+            return resultado
+        
+        except Exception as e:
+            print(f"❌ Error crítico registrando en bitácora: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+            
+
+    def verificar_ultimo_registro_bitacora(self):
+        """Verificar el último registro en la bitácora directamente"""
+        try:
+            if not self.bitacora_controller:
+                return
+                
+            # Obtener registros recientes
+            from datetime import datetime, timedelta
+            fecha_hasta = datetime.now().strftime('%Y-%m-%d')
+            fecha_desde = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            
+            registros = self.bitacora_controller.obtener_registros_bitacora(fecha_desde, fecha_hasta)
+            
+            print(f"📊 Últimos 3 registros en bitácora:")
+            for i, registro in enumerate(registros[:3]):
+                fecha, usuario, modulo, accion, descripcion, detalles, arete = registro
+                print(f"   {i+1}. {fecha} - {modulo} - {accion} - {descripcion}")
+                
+        except Exception as e:
+            print(f"❌ Error verificando últimos registros: {e}")
     
     def guardar_becerro(self):
-        """Guarda el nuevo becerro en la base de datos"""
+        """Guarda el nuevo becerro en la base de datos - CON BITÁCORA"""
         try:
+            print("🔄 Iniciando proceso de guardado de becerro...")
+            
             if not self.validar_datos():
-                return
+                print("❌ Validación de datos fallida")
+                return False
                 
             # Obtener datos del formulario
             arete = self.ui.lineEdit.text().strip()
@@ -275,22 +376,15 @@ class AgregarBecerroController(QtWidgets.QDialog):
             corral = self.ui.comboBox.currentText().strip()
             estatus = self.ui.comboBox_6.currentText()
             arete_madre = self.ui.comboBox_5.currentText().strip()
-            arete_padre = self.ui.lineEdit_4.text().strip()
-            
-            # Obtener observaciones del widget correcto
             observaciones = self.obtener_texto_observaciones()
             
-            # Si arete_madre es el valor por defecto, guardar como None
             if arete_madre == "Sin madre registrada" or arete_madre == "Sin madre":
                 arete_madre = None
             
-            print(f"📝 Guardando becerro: {nombre}, Arete: {arete}")
-            print(f"   Sexo: {sexo}, Estatus: {estatus}")
-            print(f"   Observaciones: {observaciones}")
-            print(f"   Foto cargada: {'Sí' if self.foto_data else 'No'}")
+            print(f"📝 Intentando guardar becerro: {nombre} (Arete: {arete})")
             
             # Insertar en la base de datos
-            if self.db.insertar_becerro(
+            resultado = self.db.insertar_becerro(
                 arete=arete,
                 nombre=nombre,
                 peso=peso,
@@ -300,19 +394,90 @@ class AgregarBecerroController(QtWidgets.QDialog):
                 corral=corral,
                 estatus=estatus,
                 aretemadre=arete_madre,
-                aretepadre=arete_padre if arete_padre else None,
                 observacion=observaciones if observaciones else None,
-                foto=self.foto_data  # Incluir la foto como BLOB
-            ):
-                QtWidgets.QMessageBox.information(self, "Éxito", "Becerro agregado correctamente")
+                foto=self.foto_data
+            )
+            
+            if resultado:
+                print("✅ Becerro insertado correctamente en la base de datos")
+                
+                # ✅ REGISTRAR EN BITÁCORA - AÑADIDO
+                if self.bitacora_controller:
+                    datos_becerro = f"Nombre: {nombre}, Arete: {arete}, Peso: {peso}kg, Sexo: {sexo}, Raza: {raza}, Corral: {corral}"
+                    resultado_bitacora = self.bitacora_controller.registrar_accion(
+                        modulo="Becerros",
+                        accion="ALTA",
+                        descripcion=f"Alta de nuevo becerro: {nombre}",
+                        detalles=datos_becerro,
+                        arete_afectado=arete
+                    )
+                    
+                    if resultado_bitacora:
+                        print("✅ Acción registrada en bitácora")
+                    else:
+                        print("❌ Error al registrar en bitácora")
+                
+                QtWidgets.QMessageBox.information(
+                    self, 
+                    "Éxito", 
+                    f"Becerro '{nombre}' agregado correctamente\nArete: {arete}"
+                )
                 self.accept()
+                return True
+                
             else:
-                QtWidgets.QMessageBox.warning(self, "Error", "Error al guardar el becerro")
+                print("❌ Error al insertar becerro en la base de datos")
+                QtWidgets.QMessageBox.warning(
+                    self, 
+                    "Error", 
+                    "No se pudo guardar el becerro en la base de datos.\n"
+                    "Puede que el arete ya exista o haya un problema de conexión."
+                )
+                return False
                 
         except Exception as e:
-            print(f"❌ Error al guardar becerro: {e}")
-            QtWidgets.QMessageBox.critical(self, "Error", f"Error al guardar: {str(e)}")
-    
+            print(f"❌ Error crítico al guardar becerro: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            QtWidgets.QMessageBox.critical(
+                self, 
+                "Error Crítico", 
+                f"Error inesperado al guardar:\n{str(e)}\n\n"
+                "Por favor, contacte al administrador del sistema."
+            )
+            return False
+        
+    def registrar_en_bitacora_simple(self, arete, nombre, peso, sexo, raza, corral):
+        try:
+        # ✅ VERIFICACIÓN DIRECTA como en generar_reporte_pdf
+            if not self.bitacora_controller:
+               print("⚠️  No hay controlador de bitácora disponible")
+               return False
+        
+        # ✅ DATOS SIMPLES como en generar_reporte_pdf
+            datos_becerro = f"Nombre: {nombre}, Arete: {arete}, Peso: {peso}kg, Sexo: {sexo}, Raza: {raza}, Corral: {corral}"
+        
+        # ✅ LLAMADA DIRECTA como en generar_reporte_pdf
+            resultado = self.bitacora_controller.registrar_accion(
+            modulo="Becerros",
+            accion="ALTA",
+            descripcion=f"Agregó becerro: {nombre}",
+            detalles=datos_becerro,
+            arete_afectado=arete
+            )
+        
+            if resultado:
+                print("✅ Registro en bitácora exitoso (método simple)")
+            else:
+                print("❌ Falló el registro en bitácora")
+            
+            return resultado
+        
+        except Exception as e:
+            print(f"❌ Error en registro bitácora simple: {e}")
+            return False
+
     def limpiar_formulario(self):
         """Limpia todos los campos del formulario incluyendo la foto"""
         self.ui.lineEdit.clear()

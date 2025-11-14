@@ -6,11 +6,12 @@ import os
 from pathlib import Path
 
 class EditarAnimalController(QtWidgets.QDialog):
-    def __init__(self, animal_data=None, parent=None):
+    def __init__(self, animal_data=None, parent=None, bitacora_controller=None):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         
         # Variable para almacenar la foto
         self.foto_data = None
@@ -339,6 +340,34 @@ class EditarAnimalController(QtWidgets.QDialog):
             print(f"   Corral: {corral}, Estatus: {estatus}")
             print(f"   Observaciones: {observaciones}")
             print(f"   Foto actualizada: {'Sí' if self.foto_data else 'No'}")
+            
+            # ✅ REGISTRAR EN BITÁCORA ANTES DE ACTUALIZAR
+            if self.bitacora_controller:
+                cambios = []
+                if arete != arete_original:
+                    cambios.append(f"Arete: {arete_original} → {arete}")
+                if nombre != self.animal_original.get('nombre', ''):
+                    cambios.append(f"Nombre: {self.animal_original.get('nombre', '')} → {nombre}")
+                if sexo != self.animal_original.get('sexo', ''):
+                    cambios.append(f"Sexo: {self.animal_original.get('sexo', '')} → {sexo}")
+                if raza != self.animal_original.get('raza', ''):
+                    cambios.append(f"Raza: {self.animal_original.get('raza', '')} → {raza}")
+                if tipo_produccion != self.animal_original.get('tipo_produccion', ''):
+                    cambios.append(f"Tipo producción: {self.animal_original.get('tipo_produccion', '')} → {tipo_produccion}")
+                if tipo_alimento != self.animal_original.get('tipo_alimento', ''):
+                    cambios.append(f"Tipo alimento: {self.animal_original.get('tipo_alimento', '')} → {tipo_alimento}")
+                if corral != self.animal_original.get('corral', ''):
+                    cambios.append(f"Corral: {self.animal_original.get('corral', '')} → {corral}")
+                if estatus != self.animal_original.get('estatus', ''):
+                    cambios.append(f"Estatus: {self.animal_original.get('estatus', '')} → {estatus}")
+                
+                if cambios:
+                    cambios_str = ", ".join(cambios)
+                    self.bitacora_controller.registrar_edicion_animal(
+                        arete=arete_original,
+                        cambios=cambios_str
+                    )
+                    print("✅ Edición registrada en bitácora con cambios detallados")
             
             # Actualizar en la base de datos
             if self.db.actualizar_animal(

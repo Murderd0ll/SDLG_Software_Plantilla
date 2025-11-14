@@ -5,15 +5,21 @@ from controllers.Aanimal import AgregarAnimalController
 from controllers.Eanimal import EditarAnimalController
 
 class AnimalesController:
-    def __init__(self, animales_widget):
+    def __init__(self, animales_widget, bitacora_controller=None):
         self.animales_widget = animales_widget
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         self.setup_connections()
         self.configurar_tabla()
+        
         print("✅ AnimalesController inicializado con widget directo")
         
         # Cargar datos automáticamente al iniciar
         self.cargar_animales()
+
+    def set_bitacora_controller(self, bitacora_controller):
+        self.bitacora_controller = bitacora_controller
+        print("✅ Bitácora asignada a AnimalesController")
         
     def setup_connections(self):
         """Configura las conexiones de los botones y señales"""
@@ -239,13 +245,18 @@ class AnimalesController:
                 self.tableWidget.setItem(row_number, 11, observacion_item)
                 
                 # Opciones (12)
-                self.agregar_botones_opciones(row_number, 12, arete)
+                sexo_animal = str(animal[4] if animal[4] else "")
+
+                print(f"🔍 DEBUG - Fila {row_number}: Arete={arete}, Sexo='{sexo_animal}', Es hembra={sexo_animal and sexo_animal.strip().lower() == 'hembra'}")
+
+                self.agregar_botones_opciones(row_number, 12, arete, sexo_animal)
 
             # Ocultar columna ID
             self.tableWidget.setColumnHidden(0, True)
             
             print(f"✅ Tabla llenada con {len(animales)} registros de animales")
 
+            
         except Exception as e:
             print(f"❌ Error al llenar tabla: {e}")
             import traceback
@@ -429,16 +440,16 @@ class AnimalesController:
                 "Error",
                 f"Error al mostrar foto: {str(e)}"
             )
-    
-    def agregar_botones_opciones(self, row, column, arete_animal):
-        """Agrega botones de salud, editar y eliminar en la columna de opciones"""
+
+    def agregar_botones_opciones(self, row, column, arete_animal, sexo_animal):
+        """Agrega botones de salud, editar y eliminar en la columna de opciones - SOLO REPRODUCCIÓN PARA HEMBRAS"""
         try:
             widget = QtWidgets.QWidget()
             layout = QtWidgets.QHBoxLayout(widget)
             layout.setContentsMargins(2, 2, 2, 2)
             layout.setSpacing(4)
-            
-            # Botón: Salud del animal
+        
+        # ✅ BOTÓN: Salud del becerro
             btn_salud = QtWidgets.QPushButton("❤️")
             btn_salud.setToolTip("Registro de salud")
             btn_salud.setStyleSheet("""
@@ -456,10 +467,30 @@ class AnimalesController:
                 }
             """)
             btn_salud.clicked.connect(lambda: self.abrir_registro_salud(arete_animal))
-            
-            # Botón Editar
+        
+        # ✅ BOTÓN: Reproducción del becerro - SOLO PARA HEMBRAS
+            btn_reproduccion = None
+            if sexo_animal and sexo_animal.lower() == "hembra":
+                btn_reproduccion = QtWidgets.QPushButton("🐄")
+                btn_reproduccion.setToolTip("Registro de reproducción")
+                btn_reproduccion.setStyleSheet("""
+                    QPushButton { 
+                        background-color: #9b59b6; 
+                        color: white; 
+                        border: none; 
+                        padding: 5px; 
+                        border-radius: 3px;
+                        font-size: 12px;
+                        min-width: 25px;
+                    }
+                    QPushButton:hover {
+                        background-color: #8e44ad;
+                    }
+                """)
+                btn_reproduccion.clicked.connect(lambda: self.abrir_registro_reproduccion(arete_animal))
+        # ✅ BOTÓN EDITAR
             btn_editar = QtWidgets.QPushButton("✏️")
-            btn_editar.setToolTip("Editar animal")
+            btn_editar.setToolTip("Editar becerro")
             btn_editar.setStyleSheet("""
                 QPushButton { 
                     background-color: #3498db; 
@@ -475,7 +506,7 @@ class AnimalesController:
                 }
             """)
             btn_editar.clicked.connect(lambda: self.editar_animal(arete_animal))
-            
+        
             # Botón eliminar
             btn_eliminar = QtWidgets.QPushButton("🗑️")
             btn_eliminar.setToolTip("Eliminar animal")
@@ -494,92 +525,19 @@ class AnimalesController:
                 }
             """)
             btn_eliminar.clicked.connect(lambda: self.eliminar_animal(arete_animal))
-            
+        
+        # ✅ AGREGAR BOTONES CONDICIONALMENTE
             layout.addWidget(btn_salud)
+            if btn_reproduccion:
+                layout.addWidget(btn_reproduccion)
             layout.addWidget(btn_editar)
             layout.addWidget(btn_eliminar)
             layout.addStretch()
-            
+        
             self.tableWidget.setCellWidget(row, column, widget)
-            
+        
         except Exception as e:
             print(f"❌ Error al agregar botones: {e}")
-    
-
-    def mostrar_observaciones_completas(self, arete_animal, observaciones):
-        """Muestra las observaciones completas en un diálogo"""
-        try:
-            print(f"📋 Mostrando observaciones completas para animal arete: {arete_animal}")
-            
-            # Obtener información del animal para el título
-            animal = self.db.obtener_animal_por_arete(arete_animal)
-            nombre_animal = animal['nombre'] if animal else "N/A"
-            
-            # Crear diálogo
-            dialog = QtWidgets.QDialog(self.animales_widget)
-            dialog.setWindowTitle(f"Observaciones - {nombre_animal} (Arete: {arete_animal})")
-            dialog.setModal(True)
-            dialog.resize(500, 400)
-            
-            layout = QtWidgets.QVBoxLayout(dialog)
-            
-            # Título
-            titulo = QtWidgets.QLabel(f"Observaciones del animal: {nombre_animal}")
-            titulo.setStyleSheet("font-weight: bold; font-size: 16px; margin: 10px;")
-            titulo.setAlignment(QtCore.Qt.AlignCenter)
-            layout.addWidget(titulo)
-            
-            # Subtítulo
-            subtitulo = QtWidgets.QLabel(f"Arete: {arete_animal}")
-            subtitulo.setStyleSheet("font-size: 14px; color: #7f8c8d; margin: 5px;")
-            subtitulo.setAlignment(QtCore.Qt.AlignCenter)
-            layout.addWidget(subtitulo)
-            
-            # Área de texto para las observaciones (solo lectura)
-            text_edit = QtWidgets.QTextEdit()
-            text_edit.setPlainText(observaciones)
-            text_edit.setReadOnly(True)
-            text_edit.setStyleSheet("""
-                QTextEdit {
-                    background-color: #f8f9fa;
-                    border: 2px solid #bdc3c7;
-                    border-radius: 5px;
-                    padding: 10px;
-                    font-size: 14px;
-                    line-height: 1.4;
-                }
-            """)
-            layout.addWidget(text_edit)
-            
-            # Botón cerrar
-            btn_cerrar = QtWidgets.QPushButton("Cerrar")
-            btn_cerrar.clicked.connect(dialog.accept)
-            btn_cerrar.setStyleSheet("""
-                QPushButton {
-                    background-color: #27ae60;
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 4px;
-                    font-weight: bold;
-                    margin: 10px;
-                }
-                QPushButton:hover {
-                    background-color: #219a52;
-                }
-            """)
-            layout.addWidget(btn_cerrar)
-            
-            dialog.exec_()
-            print("✅ Observaciones mostradas correctamente")
-            
-        except Exception as e:
-            print(f"❌ Error al mostrar observaciones: {e}")
-            QtWidgets.QMessageBox.critical(
-                self.animales_widget,
-                "Error",
-                f"No se pudieron mostrar las observaciones: {str(e)}"
-            )
     
     def agregar_animal(self):
         """Abre diálogo para agregar nuevo animal"""
@@ -587,7 +545,8 @@ class AnimalesController:
             print("📝 Abriendo diálogo para agregar animal...")
             
             # Crear y mostrar el diálogo modal
-            dialog = AgregarAnimalController(self.animales_widget)
+            dialog = AgregarAnimalController(parent=self.animales_widget, 
+            bitacora_controller=self.bitacora_controller)
             resultado = dialog.exec_()
             
             # Si se guardó correctamente, recargar la tabla
@@ -621,12 +580,25 @@ class AnimalesController:
             # Ya viene como diccionario, no necesitamos convertirlo
             print(f"📋 Datos del animal a editar: {animal_data['nombre']} (Arete: {animal_data['arete']})")
             
-            # Crear y mostrar el diálogo de edición
-            dialog = EditarAnimalController(animal_data=animal_data, parent=self.animales_widget)
+            # Crear y mostrar el diálogo de edición CON BITÁCORA
+            dialog = EditarAnimalController(
+                animal_data=animal_data, 
+                parent=self.animales_widget,
+                bitacora_controller=self.bitacora_controller  # ✅ PASAR BITÁCORA
+            )
             resultado = dialog.exec_()
             
             # Si se guardaron los cambios, recargar la tabla
             if resultado == QtWidgets.QDialog.Accepted:
+                # ✅ REGISTRAR EN BITÁCORA LA EDICIÓN
+                if self.bitacora_controller:
+                    cambios = f"Animal editado - Nombre: {animal_data['nombre']}, Arete: {animal_data['arete']}"
+                    self.bitacora_controller.registrar_edicion_animal(
+                        arete=arete_animal,
+                        cambios=cambios
+                    )
+                    print("✅ Edición registrada en bitácora")
+                
                 self.cargar_animales()
                 print("✅ Animal actualizado, tabla recargada")
                 
@@ -678,6 +650,11 @@ class AnimalesController:
             if respuesta == QtWidgets.QMessageBox.Yes:
                 print(f"🗑️ EJECUTANDO ELIMINACIÓN - Arete: {arete_animal}")
                 
+                # ✅ REGISTRAR EN BITÁCORA ANTES DE ELIMINAR
+                if self.bitacora_controller:
+                    self.bitacora_controller.registrar_eliminacion_animal(arete_animal)
+                    print("✅ Eliminación registrada en bitácora")
+                
                 # Intentar eliminar por arete
                 resultado = self.db.eliminar_animal_por_arete(arete_animal)
                 print(f"🔍 ELIMINAR - Resultado de eliminar_animal_por_arete(): {resultado}")
@@ -707,6 +684,51 @@ class AnimalesController:
                 "Error",
                 f"Error crítico al eliminar animal: {str(e)}"
             )
+
+    def abrir_registro_salud(self, arete_animal):
+        """Abre el diálogo de registro de salud para el animal"""
+        try:
+            print(f"❤️ Abriendo registro de salud para animal arete: {arete_animal}")
+            
+            # Importar aquí para evitar dependencias circulares
+            from agregarsalud_controller import AgregarSaludController
+            
+            # Crear y mostrar el diálogo de salud
+            dialog = AgregarSaludController(
+                parent=self.animales_widget,
+                bitacora_controller=self.bitacora_controller,
+                arete_animal=arete_animal,
+                tipo_animal="Ganado",
+                main_window=self._obtener_main_window()
+            )
+            
+            resultado = dialog.exec_()
+            
+            if resultado == QtWidgets.QDialog.Accepted:
+                print("✅ Registro de salud guardado correctamente")
+                # Opcional: Recargar datos si es necesario
+                # self.cargar_animales()
+            else:
+                print("ℹ️ Diálogo de salud cerrado sin guardar")
+                
+        except Exception as e:
+            print(f"❌ Error al abrir registro de salud: {e}")
+            import traceback
+            traceback.print_exc()
+            QtWidgets.QMessageBox.critical(
+                self.animales_widget,
+                "Error",
+                f"No se pudo abrir el registro de salud: {str(e)}"
+            )
+            
+    def _obtener_main_window(self):
+        """Obtiene la ventana principal de la jerarquía"""
+        parent = self.animales_widget.parent()
+        while parent:
+            if hasattr(parent, 'cambiar_pagina'):
+                return parent
+            parent = parent.parent()
+        return None
     
     def buscar_animales(self):
         """Busca animales según el texto en el buscador"""
@@ -727,3 +749,34 @@ class AnimalesController:
         """Fuerza la actualización de la tabla"""
         print("🔄 Forzando actualización de tabla...")
         self.cargar_animales()
+
+    def abrir_registro_reproduccion(self, arete_animal):
+        try:
+            print(f"🐄 Abriendo registro de reproducción para animal arete: {arete_animal}")
+        
+            from agregarreproduccion_controller import AgregarReproduccionController
+        
+        # ✅ OBTENER LA VENTANA PRINCIPAL
+            main_window = self._obtener_main_window()
+        
+            dialog = AgregarReproduccionController(
+            parent=self.animales_widget,  # o self.becerros_widget según el controlador
+            bitacora_controller=self.bitacora_controller,
+            arete_animal=arete_animal,
+            main_window=main_window
+            )
+        
+            resultado = dialog.exec_()
+         
+            if resultado == QtWidgets.QDialog.Accepted:
+                print("✅ Registro de reproducción guardado correctamente")    
+            else:
+                print("ℹ️ Diálogo de reproducción cerrado sin guardar")
+            
+        except Exception as e:
+            print(f"❌ Error al abrir registro de reproducción: {e}")
+            QtWidgets.QMessageBox.critical(
+            self.animales_widget,  # o self.becerros_widget
+            "Error",
+            f"No se pudo abrir el registro de reproducción: {str(e)}"
+            )

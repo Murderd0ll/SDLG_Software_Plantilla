@@ -4,11 +4,12 @@ from controllers.agregar_becerro_controller import AgregarBecerroController
 from controllers.editar_becerro_controller import EditarBecerroController  # ✅ NUEVA IMPORTACIÓN
 
 class BecerrosController:
-    def __init__(self, becerros_widget):
+    def __init__(self, becerros_widget, bitacora_controller=None):
         self.becerros_widget = becerros_widget
         self.db = Database()
         self.setup_connections()
         self.configurar_tabla()
+        self.bitacora_controller = bitacora_controller
         print("✅ BecerrosController inicializado con widget directo")
         
         # ✅ LINEA NUEVA: Cargar datos automáticamente al iniciar
@@ -230,7 +231,7 @@ class BecerrosController:
                 self.tableWidget.setItem(row_number, 10, madre_item)
                 
                 # ✅ OBSERVACIONES EN COLUMNA 11 - AHORA CLICKEABLE
-                observacion = str(becerro[11] if len(becerro) > 11 and becerro[11] is not None else "")
+                observacion = str(becerro[10] if len(becerro) > 10 and becerro[10] is not None else "")
                 # Mostrar solo preview en la tabla
                 observacion_preview = observacion[:30] + "..." if len(observacion) > 30 else observacion
                 observacion_item = QtWidgets.QTableWidgetItem(observacion_preview)
@@ -602,7 +603,8 @@ class BecerrosController:
             print("📝 Abriendo diálogo para agregar becerro...")
             
             # Crear y mostrar el diálogo modal
-            dialog = AgregarBecerroController(self.becerros_widget)
+            dialog = AgregarBecerroController(parent=self.becerros_widget, 
+                bitacora_controller=self.bitacora_controller)
             resultado = dialog.exec_()
             
             # Si se guardó correctamente, recargar la tabla
@@ -617,6 +619,49 @@ class BecerrosController:
                 "Error", 
                 f"No se pudo abrir el formulario: {str(e)}"
             )
+
+    def abrir_registro_salud(self, arete_becerro):
+        try:
+            print(f"❤️ Abriendo registro de salud para becerro arete: {arete_becerro}")
+        
+            # Importar aquí para evitar dependencias circulares
+            from agregarsalud_controller import AgregarSaludController
+
+            main_window = self._obtener_main_window()
+            # Crear y mostrar el diálogo de salud
+            dialog = AgregarSaludController(
+                parent=self.becerros_widget,
+                bitacora_controller=self.bitacora_controller,
+                arete_animal=arete_becerro,
+                tipo_animal="Becerro",
+                main_window=main_window 
+            )
+        
+            resultado = dialog.exec_()
+        
+            if resultado == QtWidgets.QDialog.Accepted:
+                print("✅ Registro de salud guardado correctamente")
+            else:
+                print("ℹ️ Diálogo de salud cerrado sin guardar")
+            
+        except Exception as e:
+            print(f"❌ Error al abrir registro de salud: {e}")
+            import traceback
+            traceback.print_exc()
+            QtWidgets.QMessageBox.critical(
+                self.becerros_widget,
+                "Error",
+                f"No se pudo abrir el registro de salud: {str(e)}"
+            )
+
+    def _obtener_main_window(self):
+        """Obtiene la ventana principal de la jerarquía"""
+        parent = self.becerros_widget.parent()
+        while parent:
+            if hasattr(parent, 'cambiar_pagina'):
+                return parent
+            parent = parent.parent()
+        return None
     
     def editar_becerro(self, arete_becerro):
         """Abre diálogo para editar becerro existente usando EditarBecerroController"""
@@ -644,19 +689,34 @@ class BecerrosController:
                 'corral': becerro_data[7] if len(becerro_data) > 7 else '',
                 'estatus': becerro_data[8] if len(becerro_data) > 8 else 'Activo',
                 'aretemadre': becerro_data[9] if len(becerro_data) > 9 else '',
-                'aretepadre': becerro_data[10] if len(becerro_data) > 10 else '',
-                'observacion': becerro_data[11] if len(becerro_data) > 11 else '',
-                'foto': becerro_data[12] if len(becerro_data) > 12 else None
+                'observacion': becerro_data[10] if len(becerro_data) > 10 else '',
+                'foto': becerro_data[11] if len(becerro_data) > 11 else None
             }
             
             print(f"📋 Datos del becerro a editar: {datos_becerro['nombre']} (Arete: {datos_becerro['arete']})")
             
-            # Crear y mostrar el diálogo de edición
-            dialog = EditarBecerroController(becerro_data=datos_becerro, parent=self.becerros_widget)
+            # ✅ PASAR BITÁCORA AL DIÁLOGO DE EDICIÓN
+            dialog = EditarBecerroController(
+                becerro_data=datos_becerro, 
+                parent=self.becerros_widget,
+                bitacora_controller=self.bitacora_controller
+            )
             resultado = dialog.exec_()
             
             # Si se guardaron los cambios, recargar la tabla
             if resultado == QtWidgets.QDialog.Accepted:
+                # ✅ REGISTRAR EN BITÁCORA LA EDICIÓN
+                if self.bitacora_controller:
+                    cambios = f"Becerro editado - Arete: {arete_becerro}, Nombre: {datos_becerro['nombre']}"
+                    self.bitacora_controller.registrar_accion(
+                        modulo="Becerros",
+                        accion="ACTUALIZAR",
+                        descripcion="Edición de datos de becerro",
+                        detalles=cambios,
+                        arete_afectado=arete_becerro
+                    )
+                    print("✅ Edición registrada en bitácora")
+                
                 self.cargar_becerros()
                 print("✅ Becerro actualizado, tabla recargada")
                 
@@ -702,11 +762,22 @@ class BecerrosController:
                 f"Nombre: {nombre_becerro}\n"
                 f"Arete: {arete_confirmacion}",
                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                QtWidgets.QMessageBox.No  # Botón por defecto
+                QtWidgets.QMessageBox.No
             )
             
             if respuesta == QtWidgets.QMessageBox.Yes:
                 print(f"🗑️ EJECUTANDO ELIMINACIÓN - Arete: {arete_becerro}")
+                
+                # ✅ REGISTRAR EN BITÁCORA ANTES DE ELIMINAR
+                if self.bitacora_controller:
+                    self.bitacora_controller.registrar_accion(
+                        modulo="Becerros",
+                        accion="ELIMINAR",
+                        descripcion="Eliminación de becerro",
+                        detalles=f"Arete: {arete_becerro}, Nombre: {nombre_becerro}",
+                        arete_afectado=arete_becerro
+                    )
+                    print("✅ Eliminación registrada en bitácora")
                 
                 # Intentar eliminar por arete
                 resultado = self.db.eliminar_becerro_por_arete(arete_becerro)
@@ -758,3 +829,4 @@ class BecerrosController:
         """Fuerza la actualización de la tabla"""
         print("🔄 Forzando actualización de tabla...")
         self.cargar_becerros()
+

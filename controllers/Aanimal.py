@@ -6,11 +6,12 @@ import os
 from pathlib import Path
 
 class AgregarAnimalController(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, bitacora_controller=None):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         
         # Variable para almacenar la foto
         self.foto_data = None
@@ -231,12 +232,11 @@ class AgregarAnimalController(QtWidgets.QDialog):
             return False
     
     def guardar_animal(self):
-        """Guarda el nuevo animal en la base de datos"""
         try:
             if not self.validar_datos():
                 return
-                
-            # Obtener datos del formulario
+            
+        # Obtener datos del formulario
             arete = self.ui.lineEdit.text().strip()
             nombre = self.ui.lineEdit_2.text().strip()
             sexo = self.ui.comboBox_2.currentText()
@@ -246,18 +246,18 @@ class AgregarAnimalController(QtWidgets.QDialog):
             fecha_nacimiento = self.ui.dateEdit.date().toString("yyyy-MM-dd")
             corral = self.ui.comboBox.currentText().strip()
             estatus = self.ui.comboBox_6.currentText()
-            
-            # Obtener observaciones
+        
+        # Obtener observaciones
             observaciones = self.obtener_texto_observaciones()
-            
+        
             print(f"📝 Guardando animal: {nombre}, Arete: {arete}")
             print(f"   Sexo: {sexo}, Raza: {raza}")
             print(f"   Producción: {tipo_produccion}, Alimento: {tipo_alimento}")
             print(f"   Corral: {corral}, Estatus: {estatus}")
             print(f"   Observaciones: {observaciones}")
             print(f"   Foto cargada: {'Sí' if self.foto_data else 'No'}")
-            
-            # Insertar en la base de datos
+        
+        # Insertar en la base de datos
             if self.db.insertar_animal(
                 arete=arete,
                 nombre=nombre,
@@ -271,11 +271,22 @@ class AgregarAnimalController(QtWidgets.QDialog):
                 observaciones=observaciones,
                 foto=self.foto_data
             ):
+            # ✅ REGISTRAR EN BITÁCORA - AÑADIDO
+                if self.bitacora_controller:
+                    datos_animal = f"Arete: {arete}, Nombre: {nombre}, Raza: {raza}, Sexo: {sexo}, Corral: {corral}"
+                    self.bitacora_controller.registrar_alta_animal(
+                        arete=arete,
+                        datos=datos_animal
+                    )
+                    print("✅ Acción registrada en bitácora")
+                else:
+                    print("⚠️ No hay controlador de bitácora disponible")
+            
                 QtWidgets.QMessageBox.information(self, "Éxito", "Animal agregado correctamente")
                 self.accept()
             else:
                 QtWidgets.QMessageBox.warning(self, "Error", "Error al guardar el animal")
-                
+            
         except Exception as e:
             print(f"❌ Error al guardar animal: {e}")
             QtWidgets.QMessageBox.critical(self, "Error", f"Error al guardar: {str(e)}")

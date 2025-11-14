@@ -1,14 +1,16 @@
+# Acorrales.py - VERSIÓN CON BITÁCORA
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ui.agregarcorral_ui import Ui_Dialog
 from database import Database
 import uuid
 
 class AgregarCorralController(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, bitacora_controller=None):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.db = Database()
+        self.bitacora_controller = bitacora_controller
         
         self.setup_connections()
         self.configurar_widgets()
@@ -65,7 +67,7 @@ class AgregarCorralController(QtWidgets.QDialog):
         
         self.ui.comboBox_4.clear()
         self.ui.comboBox_4.addItems(condiciones)
-        self.ui.comboBox_4.setCurrentIndex(0)  # Excelente por defecto
+        self.ui.comboBox_4.setCurrentIndex(0)
         
     def obtener_texto_observaciones(self):
         """Obtiene el texto de observaciones del QTextEdit"""
@@ -80,7 +82,6 @@ class AgregarCorralController(QtWidgets.QDialog):
     
     def generar_identificador_unico(self):
         """Genera un identificador único para el corral"""
-        # Podemos usar UUID o generar un ID basado en el nombre
         identificador = f"CORRAL_{uuid.uuid4().hex[:8].upper()}"
         return identificador
     
@@ -157,7 +158,6 @@ class AgregarCorralController(QtWidgets.QDialog):
             
             # Verificar si ya existe un corral con el mismo identificador
             if self.db.existe_corral_por_id(identificador):
-                # Si existe, generar uno nuevo
                 identificador = self.generar_identificador_unico()
                 print(f"🔄 Identificador ya existía, nuevo: {identificador}")
             
@@ -172,6 +172,17 @@ class AgregarCorralController(QtWidgets.QDialog):
                 condicion=condicion,
                 observaciones=observaciones if observaciones else None
             ):
+                # ✅ REGISTRAR EN BITÁCORA - AÑADIDO
+                if self.bitacora_controller:
+                    datos_corral = f"ID: {identificador}, Nombre: {nombre}, Ubicación: {ubicacion}, Capacidad: {capacidad_actual}/{capacidad_maxima}"
+                    self.bitacora_controller.registrar_accion(
+                        modulo="Corrales",
+                        accion="INSERTAR",
+                        descripcion="Alta de nuevo corral",
+                        detalles=datos_corral
+                    )
+                    print("✅ Acción registrada en bitácora")
+                
                 QtWidgets.QMessageBox.information(self, "Éxito", "Corral agregado correctamente")
                 self.accept()
             else:
@@ -183,22 +194,13 @@ class AgregarCorralController(QtWidgets.QDialog):
     
     def limpiar_formulario(self):
         """Limpia todos los campos del formulario"""
-        # Limpiar campos de texto
-        self.ui.lineEdit_2.clear()  # Nombre
-        self.ui.lineEdit_3.clear()  # Ubicación
-        
-        # Resetear valores numéricos
-        self.ui.spinBox.setValue(0)    # Capacidad actual
-        self.ui.spinBox_2.setValue(10) # Capacidad máxima
-        
-        # Resetear combobox
-        self.ui.comboBox_4.setCurrentIndex(0)  # Condición (Excelente)
-        
-        # Resetear fecha
+        self.ui.lineEdit_2.clear()
+        self.ui.lineEdit_3.clear()
+        self.ui.spinBox.setValue(0)
+        self.ui.spinBox_2.setValue(10)
+        self.ui.comboBox_4.setCurrentIndex(0)
         fecha_actual = QtCore.QDate.currentDate()
         self.ui.dateEdit.setDate(fecha_actual)
-        
-        # Limpiar observaciones
         self.limpiar_observaciones()
     
     def closeEvent(self, event):
