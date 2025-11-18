@@ -117,16 +117,63 @@ class Database:
             print(f"❌ Error al actualizar becerro: {e}")
             return False
 
-    def eliminar_becerro_por_arete(self, arete: str) -> bool:
-        """Elimina un registro de la tabla tbecerros por arete"""
+    def eliminar_registros_salud_por_arete(self, arete: str) -> bool:
+        """Elimina todos los registros de salud asociados a un arete"""
         try:
-            print(f"🗑️ BD - Intentando eliminar becerro por arete: {arete}")
-            query = "DELETE FROM tbecerros WHERE aretebece = ?"
+            print(f"🗑️ BD - Intentando eliminar registros de salud para arete: {arete}")
+            query = "DELETE FROM tsalud WHERE areteanimal = ?"
             cursor = self.ejecutar_consulta(query, (arete,))
-            
+        
             if cursor:
                 filas_afectadas = cursor.rowcount
-                print(f"🗑️ BD - Filas afectadas: {filas_afectadas}")
+                print(f"🗑️ BD - Registros de salud eliminados: {filas_afectadas}")
+                return True
+            else:
+                print("🗑️ BD - Error: cursor es None al eliminar registros de salud")
+                return False
+        except Exception as e:
+            print(f"🗑️ BD - Error en eliminar_registros_salud_por_arete: {e}")
+            return False
+
+    def eliminar_registros_reproduccion_por_arete(self, arete: str) -> bool:
+        """Elimina todos los registros de reproducción asociados a un arete"""
+        try:
+            print(f"🗑️ BD - Intentando eliminar registros de reproducción para arete: {arete}")
+            query = "DELETE FROM treprod WHERE areteanimal = ?"
+            cursor = self.ejecutar_consulta(query, (arete,))
+        
+            if cursor:
+                filas_afectadas = cursor.rowcount
+                print(f"🗑️ BD - Registros de reproducción eliminados: {filas_afectadas}")
+                return True
+            else:
+                print("🗑️ BD - Error: cursor es None al eliminar registros de reproducción")
+                return False
+        except Exception as e:
+            print(f"🗑️ BD - Error en eliminar_registros_reproduccion_por_arete: {e}")
+            return False
+
+    def eliminar_becerro_por_arete(self, arete: str) -> bool:
+        """Elimina un registro de la tabla tbecerros por arete y sus registros relacionados"""
+        try:
+            print(f"🗑️ BD - Intentando eliminar becerro y registros relacionados por arete: {arete}")
+        
+        # 1. PRIMERO: Eliminar registros de salud relacionados
+            print("🗑️ BD - Eliminando registros de salud relacionados...")
+            self.eliminar_registros_salud_por_arete(arete)
+        
+        # 2. SEGUNDO: Eliminar registros de reproducción relacionados  
+            print("🗑️ BD - Eliminando registros de reproducción relacionados...")
+            self.eliminar_registros_reproduccion_por_arete(arete)
+        
+        # 3. FINALMENTE: Eliminar el becerro
+            print("🗑️ BD - Eliminando becerro...")
+            query = "DELETE FROM tbecerros WHERE aretebece = ?"
+            cursor = self.ejecutar_consulta(query, (arete,))
+        
+            if cursor:
+                filas_afectadas = cursor.rowcount
+                print(f"🗑️ BD - Becerro eliminado. Filas afectadas: {filas_afectadas}")
                 return filas_afectadas > 0
             else:
                 print("🗑️ BD - Error: cursor es None")
@@ -134,32 +181,45 @@ class Database:
         except Exception as e:
             print(f"🗑️ BD - Error en eliminar_becerro_por_arete: {e}")
             return False
-
-    def buscar_becerros_por_nombre(self, nombre: str) -> List[Tuple]:
-        """Busca becerros por nombre"""
-        query = """
-        SELECT idbece, aretebece, nombrebece, pesobece, sexobece, razabece, nacimientobece, 
-               corralbece, estatusbece, aretemadre, observacionbece, fotobece
-        FROM tbecerros
-        WHERE nombrebece LIKE ?
-        """
-        cursor = self.ejecutar_consulta(query, (f'%{nombre}%',))
-        if cursor:
-            return cursor.fetchall()
-        return []
-
-    def obtener_becerro_por_id(self, idbece: int) -> Optional[Tuple]:
-        """Obtiene un becerro por su ID"""
-        query = """
-        SELECT idbece, aretebece, nombrebece, pesobece, sexobece, razabece, nacimientobece, 
-               corralbece, estatusbece, aretemadre, observacionbece, fotobece
-        FROM tbecerros
-        WHERE idbece = ?
-        """
-        cursor = self.ejecutar_consulta(query, (idbece,))
-        if cursor:
-            return cursor.fetchone()
-        return None
+        
+    def buscar_becerros_en_todos_los_campos(self, texto: str) -> List[Tuple]:
+        """Busca becerros en todos los campos de la tabla"""
+        try:
+            print(f"🔍 BD - Buscando becerros en todos los campos: '{texto}'")
+        
+            # Verificar si el texto es un número para búsquedas en peso
+            texto_like = f'%{texto}%'
+        
+            query = """
+            SELECT idbece, aretebece, nombrebece, pesobece, sexobece, razabece, nacimientobece, 
+                corralbece, estatusbece, aretemadre, observacionbece, fotobece
+            FROM tbecerros
+            WHERE aretebece LIKE ? OR 
+                nombrebece LIKE ? OR 
+                razabece LIKE ? OR 
+                corralbece LIKE ? OR 
+                estatusbece LIKE ? OR 
+                aretemadre LIKE ? OR 
+                observacionbece LIKE ? OR
+                sexobece LIKE ? OR
+                pesobece LIKE ? OR
+                nacimientobece LIKE ?
+            """
+            cursor = self.ejecutar_consulta(query, (
+                texto_like, texto_like, texto_like, texto_like, 
+                texto_like, texto_like, texto_like, texto_like, texto_like, texto_like
+            ))
+        
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} becerros encontrados en búsqueda múltiple")
+                return resultados
+            return []
+        
+        except Exception as e:
+            print(f"❌ BD - Error en buscar_becerros_en_todos_los_campos: {e}")
+            return []
+    
 
     def obtener_becerro_por_arete(self, arete: str) -> Optional[Tuple]:
         """Obtiene un becerro por su arete"""
@@ -190,12 +250,26 @@ class Database:
             return None
     
     def obtener_corrales(self) -> List[Tuple]:
-        """Obtiene todos los corrales de la tabla tcorrales"""
-        query = "SELECT idcorral, nombrecorral FROM tcorrales"
-        cursor = self.ejecutar_consulta(query)
-        if cursor:
-            return cursor.fetchall()
-        return []
+        """Obtiene todos los corrales de la tabla tcorral"""
+        try:
+            print("🔍 BD - Obteniendo corrales desde tcorral...")
+            query = "SELECT identcorral, nomcorral FROM tcorral"  # Cambiado a tcorral
+            cursor = self.ejecutar_consulta(query)
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} corrales encontrados")
+            
+                # Debug: mostrar los corrales encontrados
+                for corral in resultados:
+                    print(f"   - ID: {corral[0]}, Nombre: {corral[1]}")
+                
+                return resultados
+            else:
+                print("❌ BD - Error: cursor es None en obtener_corrales")
+                return []
+        except Exception as e:
+            print(f"❌ BD - Error en obtener_corrales: {e}")
+            return []
     
     def obtener_razas_becerros(self) -> List[str]:
         """Obtiene las razas únicas de la tabla tbecerros"""
@@ -210,20 +284,132 @@ class Database:
     
     def obtener_aretes_madres(self) -> List[str]:
         """Obtiene aretes únicos de animales que pueden ser madres"""
-        query = """
-        SELECT DISTINCT aretebece FROM tbecerros 
-        WHERE aretebece IS NOT NULL AND aretebece != '' AND sexobece = 'Hembra'
-        UNION
-        SELECT DISTINCT arete FROM tanimales 
-        WHERE arete IS NOT NULL AND arete != '' AND sexo = 'Hembra'
-        """
-        cursor = self.ejecutar_consulta(query)
-        if cursor:
-            resultados = [fila[0] for fila in cursor.fetchall() if fila[0]]
-            print(f"🔍 Arete madres encontrados en BD: {resultados}")
-            return resultados
-        print("🔍 No se encontraron aretes de madres en la BD")
-        return []
+        try:
+            print("🔍 BD - Buscando aretes de madres...")
+            query = """
+            SELECT DISTINCT aretebece FROM tbecerros 
+            WHERE aretebece IS NOT NULL AND aretebece != '' AND sexobece = 'Hembra'
+            UNION
+            SELECT DISTINCT aretegdo FROM tganado 
+            WHERE aretegdo IS NOT NULL AND aretegdo != '' AND sexogdo = 'Hembra'
+            """
+            cursor = self.ejecutar_consulta(query)
+            if cursor:
+                resultados = [fila[0] for fila in cursor.fetchall() if fila[0]]
+                print(f"✅ BD - Arete madres encontrados: {len(resultados)} - {resultados}")
+                return resultados
+            print("🔍 No se encontraron aretes de madres en la BD")
+            return []
+        except Exception as e:
+            print(f"❌ BD - Error en obtener_aretes_madres: {e}")
+            return []
+
+    def obtener_capacidad_corral(self, nombre_corral: str) -> dict:
+        """Obtiene la capacidad máxima y actual de un corral"""
+        try:
+            query = "SELECT capmax, capactual FROM tcorral WHERE nomcorral = ?"
+            cursor = self.ejecutar_consulta(query, (nombre_corral,))
+            if cursor:
+                resultado = cursor.fetchone()
+                if resultado:
+                    capmax, capactual = resultado
+                # Convertir a enteros, manejando casos nulos
+                    try:
+                        if capmax is None or capmax == '':
+                            capmax_int = 0
+                        else:
+                            capmax_int = int(capmax)
+                    except (ValueError, TypeError):
+                        capmax_int = 0
+                    
+                    try:
+                        if capactual is None or capactual == '':
+                            capactual_int = 0
+                        else:
+                            capactual_int = int(capactual)
+                    except (ValueError, TypeError):
+                        capactual_int = 0
+                
+                    return {
+                        'capacidad_maxima': capmax_int,
+                        'capacidad_actual': capactual_int
+                    }
+            return {'capacidad_maxima': 0, 'capacidad_actual': 0}
+        except Exception as e:
+            print(f"❌ Error al obtener capacidad del corral: {e}")
+            return {'capacidad_maxima': 0, 'capacidad_actual': 0}
+
+    def contar_animales_en_corral(self, nombre_corral: str) -> int:
+        """Cuenta cuántos animales hay en un corral específico"""
+        try:
+            # Contar en tganado
+            query_ganado = "SELECT COUNT(*) FROM tganado WHERE corralgdo = ? AND estatusgdo != 'Muerto' AND estatusgdo != 'Vendido'"
+            cursor_ganado = self.ejecutar_consulta(query_ganado, (nombre_corral,))
+            count_ganado = cursor_ganado.fetchone()[0] if cursor_ganado else 0
+        # Contar en tbecerros (si es necesario)
+            query_becerros = "SELECT COUNT(*) FROM tbecerros WHERE corralbece = ? AND estatusbece != 'Muerto' AND estatusbece != 'Vendido'"
+            cursor_becerros = self.ejecutar_consulta(query_becerros, (nombre_corral,))
+            count_becerros = cursor_becerros.fetchone()[0] if cursor_becerros else 0
+        
+            total = count_ganado + count_becerros
+            print(f"🔢 Animales en corral {nombre_corral}: {total} (ganado: {count_ganado}, becerros: {count_becerros})")
+            return total
+        except Exception as e:
+            print(f"❌ Error al contar animales en corral: {e}")
+            return 0
+
+    def obtener_corrales_disponibles(self) -> List[Tuple]:
+        """Obtiene solo los corrales que tienen capacidad disponible"""
+        try:
+            print("🔍 BD - Obteniendo corrales disponibles...")
+            query = "SELECT identcorral, nomcorral, capmax, capactual FROM tcorral"
+            cursor = self.ejecutar_consulta(query)
+            if cursor:
+                todos_corrales = cursor.fetchall()
+                corrales_disponibles = []
+            
+                for corral in todos_corrales:
+                    identcorral, nomcorral, capmax, capactual = corral
+                
+                    try:
+                        if capmax is None or capmax == '':
+                            capmax_int = 0
+                        else:
+                            capmax_int = int(capmax)
+                    except (ValueError, TypeError):
+                        capmax_int = 0
+
+                    try:
+                        if capactual is None or capactual == '':
+                            capactual_int = 0
+                        else:
+                            capactual_int = int(capactual)
+                    except (ValueError, TypeError):
+                        capactual_int = 0
+
+                    if capmax_int == 0:
+                        corrales_disponibles.append(corral)
+                        print(f"✅ Corral sin límite: {nomcorral}")
+                        continue
+                
+                # Contar animales actuales en el corral
+                    animales_actuales = self.contar_animales_en_corral(nomcorral)
+                
+                    if animales_actuales < capmax_int:
+                        corrales_disponibles.append(corral)
+                        print(f"✅ Corral disponible: {nomcorral} ({animales_actuales}/{capmax_int})")
+                    else:
+                        print(f"❌ Corral lleno: {nomcorral} ({animales_actuales}/{capmax_int})")
+            
+                print(f"✅ BD - {len(corrales_disponibles)} corrales disponibles encontrados")
+                
+                return corrales_disponibles
+            else:
+                print("❌ BD - Error: cursor es None en obtener_corrales_disponibles")
+                return []
+        except Exception as e:
+            print(f"❌ BD - Error en obtener_corrales_disponibles: {e}")
+            return []
     
     def obtener_estatus_becerros(self) -> List[str]:
         """Obtiene estatus únicos de la tabla tbecerros"""
@@ -472,29 +658,64 @@ class Database:
             print(f"❌ BD - Error en obtener_foto_animal_por_arete: {e}")
             return None
 
-    def buscar_animales_por_nombre(self, nombre: str) -> List[Tuple]:
-        """Busca animales por nombre"""
-        query = """
-        SELECT idgdo, aretegdo, nombregdo, corralgdo, sexogdo, razagdo, prodgdo, 
-               alimentogdo, nacimientogdo, estatusgdo, observaciongdo, fotogdo
-        FROM tganado
-        WHERE nombregdo LIKE ?
-        """
-        cursor = self.ejecutar_consulta(query, (f'%{nombre}%',))
-        if cursor:
-            return cursor.fetchall()
-        return []
+    def buscar_animales_en_todos_los_campos(self, texto: str) -> List[Tuple]:
+        try:
+            print(f"🔍 BD - Buscando animales en todos los campos: '{texto}'")
+    
+            texto_like = f'%{texto}%'
+    
+            query = """
+            SELECT idgdo, aretegdo, nombregdo, corralgdo, sexogdo, razagdo, prodgdo, 
+                alimentogdo, nacimientogdo, estatusgdo, observaciongdo, fotogdo
+            FROM tganado
+            WHERE aretegdo LIKE ? OR 
+                nombregdo LIKE ? OR 
+                corralgdo LIKE ? OR 
+                sexogdo LIKE ? OR 
+                razagdo LIKE ? OR 
+                prodgdo LIKE ? OR 
+                alimentogdo LIKE ? OR 
+                estatusgdo LIKE ? OR 
+                observaciongdo LIKE ? OR
+                nacimientogdo LIKE ?  -- ✅ INCLUYE FECHA DE NACIMIENTO
+            """
+            cursor = self.ejecutar_consulta(query, (
+                texto_like, texto_like, texto_like, texto_like, 
+                texto_like, texto_like, texto_like, texto_like, 
+                texto_like, texto_like  # ✅ 10 parámetros
+            ))
+    
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} animales encontrados en búsqueda múltiple")
+                return resultados
+            return []
+    
+        except Exception as e:
+            print(f"❌ BD - Error en buscar_animales_en_todos_los_campos: {e}")
+            return []
 
     def eliminar_animal_por_arete(self, arete: str) -> bool:
-        """Elimina un registro de la tabla tganado por arete"""
+        """Elimina un registro de la tabla tganado por arete y sus registros relacionados"""
         try:
-            print(f"🗑️ BD - Intentando eliminar animal por arete: {arete}")
+            print(f"🗑️ BD - Intentando eliminar animal y registros relacionados por arete: {arete}")
+        
+        # 1. PRIMERO: Eliminar registros de salud relacionados
+            print("🗑️ BD - Eliminando registros de salud relacionados...")
+            self.eliminar_registros_salud_por_arete(arete)
+        
+        # 2. SEGUNDO: Eliminar registros de reproducción relacionados  
+            print("🗑️ BD - Eliminando registros de reproducción relacionados...")
+            self.eliminar_registros_reproduccion_por_arete(arete)
+        
+        # 3. FINALMENTE: Eliminar el animal
+            print("🗑️ BD - Eliminando animal...")
             query = "DELETE FROM tganado WHERE aretegdo = ?"
             cursor = self.ejecutar_consulta(query, (arete,))
-            
+        
             if cursor:
                 filas_afectadas = cursor.rowcount
-                print(f"🗑️ BD - Filas afectadas: {filas_afectadas}")
+                print(f"🗑️ BD - Animal eliminado. Filas afectadas: {filas_afectadas}")
                 return filas_afectadas > 0
             else:
                 print("🗑️ BD - Error: cursor es None")
@@ -549,18 +770,39 @@ class Database:
             return cursor.fetchone()
         return None
 
-    def buscar_corrales_por_nombre(self, nombre: str) -> List[Tuple]:
-        """Busca corrales por nombre"""
-        query = """
-        SELECT identcorral, nomcorral, ubicorral, capmax, capactual, 
-               fechamant, condicion, observacioncorral
-        FROM tcorral
-        WHERE nomcorral LIKE ?
-        """
-        cursor = self.ejecutar_consulta(query, (f'%{nombre}%',))
-        if cursor:
-            return cursor.fetchall()
-        return []
+    def buscar_corrales_en_todos_los_campos(self, texto: str) -> List[Tuple]:
+        """Busca corrales en todos los campos de la tabla tcorral"""
+        try:
+            print(f"🔍 BD - Buscando corrales en todos los campos: '{texto}'")
+    
+            texto_like = f'%{texto}%'
+    
+            query = """
+            SELECT identcorral, nomcorral, ubicorral, capmax, capactual, 
+                fechamant, condicion, observacioncorral
+            FROM tcorral
+            WHERE nomcorral LIKE ? OR 
+                ubicorral LIKE ? OR 
+                capmax LIKE ? OR 
+                capactual LIKE ? OR 
+                fechamant LIKE ? OR 
+                condicion LIKE ? OR 
+                observacioncorral LIKE ?
+            """
+            cursor = self.ejecutar_consulta(query, (
+                texto_like, texto_like, texto_like, texto_like, 
+                texto_like, texto_like, texto_like
+            ))
+    
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} corrales encontrados en búsqueda múltiple")
+                return resultados
+            return []
+    
+        except Exception as e:
+            print(f"❌ BD - Error en buscar_corrales_en_todos_los_campos: {e}")
+            return []
 
     def eliminar_corral_por_id(self, idcorral: str) -> bool:
         """Elimina un registro de la tabla tcorral por ID"""
@@ -637,17 +879,39 @@ class Database:
             print(f"❌ BD - Error en obtener_foto_propietario_por_id: {e}")
             return None
 
-    def buscar_propietarios_por_nombre(self, nombre: str) -> List[Tuple]:
-        """Busca propietarios por nombre"""
-        query = """
-        SELECT idprop, nombreprop, telprop, correoprop, dirprop, psgprop, uppprop, rfcprop, observacionprop, fotoprop
-        FROM tpropietarios
-        WHERE nombreprop LIKE ?
-        """
-        cursor = self.ejecutar_consulta(query, (f'%{nombre}%',))
-        if cursor:
-            return cursor.fetchall()
-        return []
+    def buscar_propietarios_en_todos_los_campos(self, texto: str) -> List[Tuple]:
+        """Busca propietarios en todos los campos de la tabla tpropietarios"""
+        try:
+            print(f"🔍 BD - Buscando propietarios en todos los campos: '{texto}'")
+    
+            texto_like = f'%{texto}%'
+    
+            query = """
+            SELECT idprop, nombreprop, telprop, correoprop, dirprop, psgprop, uppprop, rfcprop, observacionprop, fotoprop
+            FROM tpropietarios
+            WHERE nombreprop LIKE ? OR 
+                telprop LIKE ? OR 
+                correoprop LIKE ? OR 
+                dirprop LIKE ? OR 
+                psgprop LIKE ? OR 
+                uppprop LIKE ? OR 
+                rfcprop LIKE ? OR 
+                observacionprop LIKE ?
+            """
+            cursor = self.ejecutar_consulta(query, (
+                texto_like, texto_like, texto_like, texto_like, 
+                texto_like, texto_like, texto_like, texto_like
+            ))
+    
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} propietarios encontrados en búsqueda múltiple")
+                return resultados
+            return []
+    
+        except Exception as e:
+            print(f"❌ BD - Error en buscar_propietarios_en_todos_los_campos: {e}")
+            return []
 
     def eliminar_propietario_por_id(self, idpropietario: str) -> bool:
         """Elimina un registro de la tabla tpropietarios por ID"""
@@ -1029,14 +1293,18 @@ class Database:
 
 
     def obtener_registros_salud_por_arete(self, arete_animal: str) -> List[Tuple]:
-        """Obtiene todos los registros de salud de un animal por su arete"""
+        """Obtiene todos los registros de salud de un animal por su arete - CORREGIDO"""
         try:
             print(f"🔍 BD - Buscando registros de salud para arete: '{arete_animal}'")
-            
+        
             # Verificar que el arete no esté vacío
             if not arete_animal or arete_animal.strip() == "":
                 print("❌ BD - Arete vacío, retornando lista vacía")
                 return []
+        
+            # Asegurarse de que la conexión esté activa
+            if not self.connection:
+                self.connect()
             
             query = """
             SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
@@ -1045,19 +1313,72 @@ class Database:
             WHERE areteanimal = ?
             ORDER BY fecharev DESC
             """
-            cursor = self.ejecutar_consulta(query, (arete_animal.strip(),))
-            if cursor:
-                resultados = cursor.fetchall()
-                print(f"✅ BD - {len(resultados)} registros de salud encontrados para arete: '{arete_animal}'")
-                
-                # Debug: mostrar los primeros registros
-                for i, resultado in enumerate(resultados[:3]):
-                    print(f"   Registro {i+1}: Arete={resultado[1]}, Procedimiento={resultado[4]}")
-                    
-                return resultados
-            return []
+        
+            cursor = self.connection.cursor()
+            cursor.execute(query, (arete_animal.strip(),))
+            resultados = cursor.fetchall()
+        
+            print(f"✅ BD - {len(resultados)} registros de salud encontrados para arete: '{arete_animal}'")
+        
+        # Debug: mostrar los primeros registros
+            for i, resultado in enumerate(resultados[:3]):
+                print(f"   Registro {i+1}: Arete={resultado[1]}, Procedimiento={resultado[4]}")
+            
+            return resultados
+        
         except Exception as e:
             print(f"❌ BD - Error en obtener_registros_salud_por_arete: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+        
+    def buscar_registros_salud_por_arete_y_texto(self, arete_animal: str, texto: str) -> List[Tuple]:
+        """Busca registros de salud por texto pero SOLO para un arete específico"""
+        try:
+            print(f"🔍 BD - Buscando en arete específico '{arete_animal}' con texto: '{texto}'")
+
+            texto_like = f'%{texto}%'
+    
+            query = """
+            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
+                   medprev, condicionsalud, fecharev, observacionsalud, archivo
+            FROM tsalud
+            WHERE areteanimal = ? AND (
+                tipoanimal LIKE ? OR 
+                nomvet LIKE ? OR 
+                procedimiento LIKE ? OR 
+                medprev LIKE ? OR 
+                condicionsalud LIKE ? OR 
+                observacionsalud LIKE ? OR
+                fecharev LIKE ?
+            )
+            ORDER BY fecharev DESC
+            """
+        
+            # Asegurarse de que la conexión esté activa
+            if not self.connection:
+                self.connect()
+            
+            cursor = self.connection.cursor()
+            cursor.execute(query, (
+                arete_animal.strip(),  # El arete específico
+                texto_like, texto_like, texto_like, texto_like, 
+                texto_like, texto_like, texto_like  # La búsqueda en otros campos
+            ))
+        
+            resultados = cursor.fetchall()
+            print(f"✅ BD - {len(resultados)} registros encontrados para arete '{arete_animal}' con texto '{texto}'")
+        
+        # Debug detallado
+            for i, resultado in enumerate(resultados):
+                print(f"   Registro {i+1}: Arete={resultado[1]}, Veterinario={resultado[3]}, Procedimiento={resultado[4]}")
+            
+            return resultados
+    
+        except Exception as e:
+            print(f"❌ BD - Error en buscar_registros_salud_por_arete_y_texto: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     # En database.py, dentro de la clase Database, agrega estos métodos:
@@ -1085,24 +1406,6 @@ class Database:
             return []
         except Exception as e:
             print(f"❌ Error en obtener_todos_registros_salud: {e}")
-            return []
-
-    def obtener_registros_salud_por_fecha(self, fecha_inicio, fecha_fin):
-        """Obtiene registros de salud por rango de fechas"""
-        try:
-            query = """
-            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
-                   medprev, condicionsalud, fecharev, observacionsalud, archivo
-            FROM tsalud 
-            WHERE fecharev BETWEEN ? AND ?
-            ORDER BY fecharev DESC
-            """
-            cursor = self.ejecutar_consulta(query, (fecha_inicio, fecha_fin))
-            if cursor:
-                return cursor.fetchall()
-            return []
-        except Exception as e:
-            print(f"❌ Error en obtener_registros_salud_por_fecha: {e}")
             return []
 
     def buscar_registros_salud(self, texto):
@@ -1284,6 +1587,179 @@ class Database:
             print(f"❌ Error en diagnóstico tabla reproducción: {e}")
             return False
 
+    def buscar_registros_reproduccion_por_arete_y_texto(self, arete_animal: str, texto: str) -> List[Tuple]:
+        """Busca registros de reproducción por texto pero SOLO para un arete específico"""
+        try:
+            print(f"🔍 BD - Buscando en arete específico '{arete_animal}' con texto: '{texto}'")
+
+            texto_like = f'%{texto}%'
+    
+            query = """
+            SELECT idreprod, areteanimal, cargada, cantpartos, fservicioactual, 
+                   faproxparto, fnuevoservicio, tecnica, observacion
+            FROM treprod
+            WHERE areteanimal = ? AND (
+                cargada LIKE ? OR 
+                cantpartos LIKE ? OR 
+                fservicioactual LIKE ? OR 
+                faproxparto LIKE ? OR 
+                fnuevoservicio LIKE ? OR 
+                tecnica LIKE ? OR 
+                observacion LIKE ?
+            )
+            ORDER BY fservicioactual DESC
+            """
+        
+            # Asegurarse de que la conexión esté activa
+            if not self.connection:
+                self.connect()
+            
+            cursor = self.connection.cursor()
+            cursor.execute(query, (
+                arete_animal.strip(),  # El arete específico
+                texto_like, texto_like, texto_like, texto_like, 
+                texto_like, texto_like, texto_like  # La búsqueda en otros campos
+            ))
+        
+            resultados = cursor.fetchall()
+            print(f"✅ BD - {len(resultados)} registros encontrados para arete '{arete_animal}' con texto '{texto}'")
+        
+        # Debug detallado
+            for i, resultado in enumerate(resultados):
+                print(f"   Registro {i+1}: Arete={resultado[1]}, Cargada={resultado[2]}, Técnica={resultado[7]}")
+            
+            return resultados
+    
+        except Exception as e:
+            print(f"❌ BD - Error en buscar_registros_reproduccion_por_arete_y_texto: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+
+    def obtener_registros_reproduccion_por_arete_y_fecha(self, arete_animal: str, fecha_inicio: str, fecha_fin: str) -> List[Tuple]:
+        """Obtiene registros de reproducción por rango de fechas SOLO para un arete específico"""
+        try:
+            print(f"🔍 BD - Filtrando por fecha para arete específico '{arete_animal}': {fecha_inicio} a {fecha_fin}")
+        
+            query = """
+            SELECT idreprod, areteanimal, cargada, cantpartos, fservicioactual, 
+                   faproxparto, fnuevoservicio, tecnica, observacion
+            FROM treprod 
+            WHERE areteanimal = ? AND fservicioactual BETWEEN ? AND ?
+            ORDER BY fservicioactual DESC
+            """
+        
+            if not self.connection:
+                self.connect()
+            
+            cursor = self.connection.cursor()
+            cursor.execute(query, (arete_animal.strip(), fecha_inicio, fecha_fin))
+            resultados = cursor.fetchall()
+        
+            print(f"✅ BD - {len(resultados)} registros encontrados para arete '{arete_animal}' en el rango de fechas")
+            return resultados
+        
+        except Exception as e:
+            print(f"❌ BD - Error en obtener_registros_reproduccion_por_arete_y_fecha: {e}")
+            return []
+        
+    def obtener_registros_salud_por_arete_y_fecha(self, arete_animal: str, fecha_inicio: str, fecha_fin: str) -> List[Tuple]:
+        """Obtiene registros de salud por rango de fechas SOLO para un arete específico"""
+        try:
+            print(f"🔍 BD - Filtrando por fecha para arete específico '{arete_animal}': {fecha_inicio} a {fecha_fin}")
+        
+            query = """
+            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
+                   medprev, condicionsalud, fecharev, observacionsalud, archivo
+            FROM tsalud 
+            WHERE areteanimal = ? AND fecharev BETWEEN ? AND ?
+            ORDER BY fecharev DESC
+            """
+        
+            if not self.connection:
+                self.connect()
+            
+            cursor = self.connection.cursor()
+            cursor.execute(query, (arete_animal.strip(), fecha_inicio, fecha_fin))
+            resultados = cursor.fetchall()
+        
+            print(f"✅ BD - {len(resultados)} registros encontrados para arete '{arete_animal}' en el rango de fechas")
+            return resultados
+        
+        except Exception as e:
+            print(f"❌ BD - Error en obtener_registros_salud_por_arete_y_fecha: {e}")
+            return []
+
+    def obtener_registros_salud_por_fecha(self, fecha_inicio, fecha_fin):
+        """Obtiene registros de salud por rango de fechas - MEJORADO"""
+        try:
+            print(f"🔍 BD - Buscando registros entre {fecha_inicio} y {fecha_fin}")
+            
+            fecha_inicio_bd = self.convertir_fecha_a_formato_bd(fecha_inicio)
+            fecha_fin_bd = self.convertir_fecha_a_formato_bd(fecha_fin)
+        
+            query = """
+            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
+                   medprev, condicionsalud, fecharev, observacionsalud, archivo
+            FROM tsalud 
+            WHERE fecharev BETWEEN ? AND ?
+            ORDER BY 
+                substr(fecharev, 7, 4) || substr(fecharev, 4, 2) || substr(fecharev, 1, 2) DESC
+            """
+            cursor = self.ejecutar_consulta(query, (fecha_inicio_bd, fecha_fin_bd))
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} registros encontrados por fecha")
+                return resultados
+            return []
+        except Exception as e:
+            print(f"❌ Error en obtener_registros_salud_por_fecha: {e}")
+            return []
+
+    def obtener_registros_salud_por_arete_y_fecha(self, arete_animal: str, fecha_inicio: str, fecha_fin: str):
+        """Obtiene registros de salud por arete y rango de fechas - MEJORADO"""
+        try:
+            print(f"🔍 BD - Buscando registros para arete '{arete_animal}' entre {fecha_inicio} y {fecha_fin}")
+
+            fecha_inicio_bd = self.convertir_fecha_a_formato_bd(fecha_inicio)
+            fecha_fin_bd = self.convertir_fecha_a_formato_bd(fecha_fin)
+        
+            query = """
+            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
+                   medprev, condicionsalud, fecharev, observacionsalud, archivo
+            FROM tsalud 
+            WHERE areteanimal = ? AND fecharev BETWEEN ? AND ?
+            ORDER BY 
+                substr(fecharev, 7, 4) || substr(fecharev, 4, 2) || substr(fecharev, 1, 2) DESC
+            """
+        
+            if not self.connection:
+                self.connect()
+        
+            cursor = self.connection.cursor()
+            cursor.execute(query, (arete_animal.strip(), fecha_inicio_bd, fecha_fin_bd))
+            resultados = cursor.fetchall()
+        
+            print(f"✅ BD - {len(resultados)} registros encontrados para arete '{arete_animal}' en el rango de fechas")
+            return resultados
+        
+        except Exception as e:
+            print(f"❌ BD - Error en obtener_registros_salud_por_arete_y_fecha: {e}")
+            return []
+
+    def convertir_fecha_a_formato_bd(self, fecha_iso: str) -> str:
+        """Convierte fecha de formato yyyy-MM-dd a dd/MM/yyyy"""
+        try:
+        # Parsear fecha ISO (yyyy-MM-dd)
+            partes = fecha_iso.split('-')
+            if len(partes) == 3:
+                año, mes, dia = partes
+            # Convertir a formato BD (dd/MM/yyyy)
+                return f"{int(dia)}/{int(mes)}/{año}"
+            return fecha_iso
+        except Exception as e:
+            print(f"❌ Error convirtiendo fecha {fecha_iso}: {e}")
+            return fecha_iso
 
     def verificar_tabla_usuarios(self):
         """Verifica si la tabla de usuarios existe y la crea si no, con la estructura correcta"""
@@ -1457,21 +1933,33 @@ class Database:
             print(f"❌ Error al insertar usuario: {e}")
             return False
 
-    def buscar_usuarios_por_nombre(self, nombre: str) -> List[Tuple]:
-        """Busca usuarios por nombre"""
+    def buscar_usuarios_en_todos_los_campos(self, texto: str) -> List[Tuple]:
+        """Busca usuarios en todos los campos de la tabla tusuarios"""
         try:
+            print(f"🔍 BD - Buscando usuarios en todos los campos: '{texto}'")
+    
+            texto_like = f'%{texto}%'
+    
             query = """
             SELECT idusuario, usuario, nombre, telefono, rol
             FROM tusuarios
-            WHERE nombre LIKE ? OR usuario LIKE ?
-            ORDER BY idusuario DESC
+            WHERE usuario LIKE ? OR 
+                nombre LIKE ? OR 
+                telefono LIKE ? OR 
+                rol LIKE ?
             """
-            cursor = self.ejecutar_consulta(query, (f'%{nombre}%', f'%{nombre}%'))
+            cursor = self.ejecutar_consulta(query, (
+                texto_like, texto_like, texto_like, texto_like
+            ))
+    
             if cursor:
-                return cursor.fetchall()
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} usuarios encontrados en búsqueda múltiple")
+                return resultados
             return []
+    
         except Exception as e:
-            print(f"❌ Error en buscar_usuarios_por_nombre: {e}")
+            print(f"❌ BD - Error en buscar_usuarios_en_todos_los_campos: {e}")
             return []
 
     def eliminar_usuario_por_id(self, id_usuario: int) -> bool:
@@ -1496,7 +1984,7 @@ class Database:
         try:
             print(f"🔐 Verificando credenciales para usuario: {usuario}")
             
-            query = "SELECT idusuario, usuario, nombre, rol FROM tusuarios WHERE usuario = ? AND pass = ?"
+            query = "SELECT idusuario, usuario, nombre, rol, telefono FROM tusuarios WHERE usuario = ? AND pass = ?"
             cursor = self.ejecutar_consulta(query, (usuario, password))
             
             if cursor:
@@ -1697,5 +2185,75 @@ class Database:
         except Exception as e:
             print(f"❌ Error actualizando tabla bitácora: {e}")
             return False
+
+    def buscar_registros_salud_en_todos_los_campos(self, texto: str) -> List[Tuple]:
+        """Busca registros de salud en todos los campos de la tabla tsalud"""
+        try:
+            print(f"🔍 BD - Buscando registros de salud en todos los campos: '{texto}'")
+
+            texto_like = f'%{texto}%'
+    
+            query = """
+            SELECT idsalud, areteanimal, tipoanimal, nomvet, procedimiento, 
+                   medprev, condicionsalud, fecharev, observacionsalud, archivo
+            FROM tsalud
+            WHERE areteanimal LIKE ? OR 
+                tipoanimal LIKE ? OR 
+                nomvet LIKE ? OR 
+                procedimiento LIKE ? OR 
+                medprev LIKE ? OR 
+                condicionsalud LIKE ? OR 
+                observacionsalud LIKE ? OR
+                fecharev LIKE ?
+            """
+            cursor = self.ejecutar_consulta(query, (
+                texto_like, texto_like, texto_like, texto_like, 
+                texto_like, texto_like, texto_like, texto_like
+            ))
+    
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} registros de salud encontrados en búsqueda múltiple")
+                return resultados
+            return []
+    
+        except Exception as e:
+            print(f"❌ BD - Error en buscar_registros_salud_en_todos_los_campos: {e}")
+            return []
+    
+    def buscar_registros_reproduccion_en_todos_los_campos(self, texto: str) -> List[Tuple]:
+        """Busca registros de reproducción en todos los campos de la tabla treprod"""
+        try:
+            print(f"🔍 BD - Buscando registros de reproducción en todos los campos: '{texto}'")
+    
+            texto_like = f'%{texto}%'
+    
+            query = """
+            SELECT idreprod, areteanimal, cargada, cantpartos, fservicioactual, 
+                   faproxparto, fnuevoservicio, tecnica, observacion
+            FROM treprod
+            WHERE areteanimal LIKE ? OR 
+                cargada LIKE ? OR 
+                cantpartos LIKE ? OR 
+                fservicioactual LIKE ? OR 
+                faproxparto LIKE ? OR 
+                fnuevoservicio LIKE ? OR 
+                tecnica LIKE ? OR 
+                observacion LIKE ?
+            """
+            cursor = self.ejecutar_consulta(query, (
+                texto_like, texto_like, texto_like, texto_like, 
+                texto_like, texto_like, texto_like, texto_like
+            ))
+
+            if cursor:
+                resultados = cursor.fetchall()
+                print(f"✅ BD - {len(resultados)} registros de reproducción encontrados en búsqueda múltiple")
+                return resultados
+            return []
+    
+        except Exception as e:
+            print(f"❌ BD - Error en buscar_registros_reproduccion_en_todos_los_campos: {e}")
+            return []
    
    

@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QPushBut
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5 import QtCore
 
-from salud_controller import SaludController
+from controllers.salud_controller import SaludController
 from ui.sidebar_ui import Ui_MainWindow
 from ui.becerros_ui import Ui_BecerrosPage
 from ui.animales_ui import Ui_AnimalesPage
@@ -16,11 +16,11 @@ from ui.sbuscar_ui import Ui_SbuscarPage
 from ui.rbuscar_ui import Ui_RbuscarPage
 from ui.usuarios_ui import Ui_UsuariosPage
 from ui.copiabdd_ui import Ui_CopiaBDDPage
-from restaurar_ui import Ui_RestaurarPage
+from ui.restaurar_ui import Ui_RestaurarPage
 from ui.index_ui import Ui_IndexPage
 from ui.reportes_ui import Ui_ReportesPage
 from ui.seguridad_ui import Ui_SeguridadPage
-from salud_ui import Ui_SaludPage 
+from ui.salud_ui import Ui_SaludPage 
 from ui.reproduccion_ui import Ui_ReproduccionPage
 
 from controllers.becerros_controller import BecerrosController
@@ -36,8 +36,8 @@ from restaurar_controller import RestaurarController
 from controllers.index_controller import MainController
 from controllers.reportes_controller import ReportesController
 from controllers.seguridad_controller import SeguridadController
-from salud_controller import SaludController
-from reproduccion_controller import ReproduccionController
+from controllers.salud_controller import SaludController
+from controllers.reproduccion_controller import ReproduccionController
 
 from database import Database
 

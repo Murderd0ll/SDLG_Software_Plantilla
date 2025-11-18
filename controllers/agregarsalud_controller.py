@@ -20,7 +20,7 @@ class AgregarSaludController(QtWidgets.QDialog):
         self.archivo_ruta = None
         
         self.setup_connections()
-        self.configurar_combobox()
+        self.configurar_widgets()
         self.cargar_datos_combo()
         self.configurar_fecha()
         self.verificar_widgets()
@@ -34,7 +34,7 @@ class AgregarSaludController(QtWidgets.QDialog):
         print("\n🔍 VERIFICANDO WIDGETS SALUD:")
         widgets = [
             'lineEdit', 'lineEdit_5', 'lineEdit_4', 'textEdit',
-            'comboBox', 'comboBox_3', 'dateEdit',
+            'lineEdit_3', 'lineEdit_2', 'dateEdit',  # Cambiados de combobox a lineEdit
             'checkBox_4', 'checkBox_5', 'checkBox_6', 'checkBox', 'checkBox_2',
             'checkBox_9', 'checkBox_8', 'checkBox_10', 'checkBox_7', 'checkBox_3'
         ]
@@ -53,44 +53,28 @@ class AgregarSaludController(QtWidgets.QDialog):
         self.ui.pushButton_3.clicked.connect(self.ver_registros_salud)  # Ver registros
         self.ui.indexbtn2.clicked.connect(self.subir_archivo)  # Subir archivo
         
-    def configurar_combobox(self):
-        """Configura los combobox para ser editables"""
-        # Combobox editables
-        self.ui.comboBox.setEditable(True)  # Procedimiento
-        self.ui.comboBox_3.setEditable(True)  # Condición de salud
-        
-    def cargar_datos_combo(self):
-        """Carga datos en los combobox desde la base de datos"""
+    def configurar_widgets(self):
+        """Configura los widgets según el nuevo diseño"""
         try:
-            print("🔄 Iniciando carga de datos en combobox salud...")
+            print("🔍 Configurando widgets de salud...")
             
-            # 1. PROCEDIMIENTOS - Valores comunes
-            self.ui.comboBox.clear()
-            procedimientos = [
-                "Consulta general", "Vacunación", "Desparasitación", 
-                "Cirugía menor", "Cirugía mayor", "Tratamiento médico",
-                "Control rutinario", "Emergencia", "Parto asistido"
-            ]
-            self.ui.comboBox.addItems(procedimientos)
-            self.ui.comboBox.setCurrentIndex(0)
-            print(f"✅ Procedimientos cargados: {len(procedimientos)}")
+            # Establecer nombre del veterinario por defecto (pero editable)
+            self.ui.lineEdit.setText("Jorge Vidal Varela Rios")
             
-            # 2. CONDICIONES DE SALUD - Valores comunes
-            self.ui.comboBox_3.clear()
-            condiciones = [
-                "Excelente", "Buena", "Regular", "Mala", "Crítica",
-                "En tratamiento", "Recuperación", "Curado", "Crónico"
-            ]
-            self.ui.comboBox_3.addItems(condiciones)
-            self.ui.comboBox_3.setCurrentIndex(0)
-            print(f"✅ Condiciones de salud cargadas: {len(condiciones)}")
             
-            print("🎉 Combobox de salud cargados correctamente")
+            print("✅ Widgets de salud configurados correctamente")
             
         except Exception as e:
-            print(f"❌ Error crítico al cargar combobox salud: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"❌ Error configurando widgets: {e}")
+        
+    def cargar_datos_combo(self):
+        """Ya no cargamos combobox, pero mantenemos el método por compatibilidad"""
+        try:
+            print("🔄 Los campos de procedimiento y condición ahora son lineEdit")
+            print("✅ No se requieren datos predefinidos para combobox")
+            
+        except Exception as e:
+            print(f"❌ Error en carga de datos: {e}")
             
     def configurar_fecha(self):
         """Configura la fecha actual"""
@@ -189,7 +173,8 @@ class AgregarSaludController(QtWidgets.QDialog):
         try:
             arete = self.ui.lineEdit_5.text().strip()
             veterinario = self.ui.lineEdit.text().strip()
-            procedimiento = self.ui.comboBox.currentText().strip()
+            procedimiento = self.ui.lineEdit_3.text().strip()  # Ahora es lineEdit
+            condicion_salud = self.ui.lineEdit_2.text().strip()  # Ahora es lineEdit
             
             if not arete:
                 QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Arete es obligatorio")
@@ -203,7 +188,12 @@ class AgregarSaludController(QtWidgets.QDialog):
                 
             if not procedimiento:
                 QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Procedimiento es obligatorio")
-                self.ui.comboBox.setFocus()
+                self.ui.lineEdit_3.setFocus()
+                return False
+                
+            if not condicion_salud:
+                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Condición de salud es obligatorio")
+                self.ui.lineEdit_2.setFocus()
                 return False
                 
             # Verificar que el animal existe en la base de datos
@@ -252,8 +242,8 @@ class AgregarSaludController(QtWidgets.QDialog):
             # Obtener datos del formulario
             arete = self.ui.lineEdit_5.text().strip()
             veterinario = self.ui.lineEdit.text().strip()
-            procedimiento = self.ui.comboBox.currentText().strip()
-            condicion_salud = self.ui.comboBox_3.currentText().strip()
+            procedimiento = self.ui.lineEdit_3.text().strip()  # Ahora es lineEdit
+            condicion_salud = self.ui.lineEdit_2.text().strip()  # Ahora es lineEdit
             medicina_preventiva = self.obtener_medicina_preventiva()
             fecha_revision = self.ui.dateEdit.date().toString("yyyy-MM-dd")
             observaciones = self.obtener_texto_observaciones()
@@ -439,11 +429,13 @@ class AgregarSaludController(QtWidgets.QDialog):
 
     def limpiar_formulario(self):
         """Limpia todos los campos del formulario"""
-        self.ui.lineEdit.clear()
+        # No limpiar el nombre del veterinario, mantener el valor por defecto
+        # self.ui.lineEdit.clear()  # Esto ya no se hace
+        
         self.ui.lineEdit_5.clear()
         self.ui.lineEdit_4.clear()
-        self.ui.comboBox.setCurrentIndex(0)
-        self.ui.comboBox_3.setCurrentIndex(0)
+        self.ui.lineEdit_3.clear()  # Procedimiento (ahora lineEdit)
+        self.ui.lineEdit_2.clear()  # Condición de salud (ahora lineEdit)
         self.ui.textEdit.clear()
         
         # Limpiar checkboxes
@@ -468,5 +460,8 @@ class AgregarSaludController(QtWidgets.QDialog):
         
         # Restablecer fecha actual
         self.configurar_fecha()
+        
+        # Restablecer el nombre del veterinario por defecto
+        self.ui.lineEdit.setText("Jorge Vidal Varela Rios")
         
         print("✅ Formulario de salud limpiado")

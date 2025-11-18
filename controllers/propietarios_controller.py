@@ -675,7 +675,7 @@ class PropietariosController:
             if self.buscador:
                 texto = self.buscador.text().strip()
                 if texto:
-                    propietarios = self.db.buscar_propietarios_por_nombre(texto)
+                    propietarios = self.db.buscar_propietarios_en_todos_los_campos(texto)
                 else:
                     propietarios = self.db.obtener_propietarios_completos()
                 self.llenar_tabla(propietarios)

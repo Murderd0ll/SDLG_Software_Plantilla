@@ -342,7 +342,7 @@ class CorralesController:
             if self.buscador:
                 texto = self.buscador.text().strip()
                 if texto:
-                    corrales = self.db.buscar_corrales_por_nombre(texto)
+                    corrales = self.db.buscar_corrales_en_todos_los_campos(texto)
                 else:
                     corrales = self.db.obtener_corrales_completos()
                 self.llenar_tabla(corrales)

@@ -1,4 +1,4 @@
-# Ecorrales.py - VERSIÓN CON BITÁCORA
+# Ecorrales.py - VERSIÓN CON BITÁCORA ACTUALIZADA
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ui.editarcorral_ui import Ui_Dialog
 from database import Database
@@ -31,15 +31,17 @@ class EditarCorralController(QtWidgets.QDialog):
         try:
             print("🔍 Configurando widgets según UI...")
             
-            self.ui.comboBox_3.setEditable(True)
+            # Ahora el comboBox_4 es para condición (no editable)
             self.ui.comboBox_4.setEditable(False)
             
+            # Configurar spinboxes
             self.ui.spinBox.setMinimum(0)
             self.ui.spinBox.setMaximum(1000)
             
             self.ui.spinBox_2.setMinimum(1)
             self.ui.spinBox_2.setMaximum(1000)
             
+            # Configurar fecha
             self.ui.dateEdit.setCalendarPopup(True)
             self.ui.dateEdit.setDate(QtCore.QDate.currentDate())
             
@@ -53,19 +55,13 @@ class EditarCorralController(QtWidgets.QDialog):
         try:
             print("🔄 Iniciando carga de datos en combobox...")
             
-            # Ubicaciones
-            self.ui.comboBox_3.clear()
-            ubicaciones = ["Norte", "Sur", "Este", "Oeste", "Centro", "Zona A", "Zona B", "Zona C"]
-            self.ui.comboBox_3.addItems(ubicaciones)
-            print(f"✅ Ubicaciones cargadas: {ubicaciones}")
-            
-            # Condición
+            # Condición (ahora es el único combobox)
             self.ui.comboBox_4.clear()
-            condiciones = ["Excelente", "Bueno", "Regular", "Malo", "En reparación", "Deshabilitado"]
+            condiciones = ["Buena", "Regular", "No apto"]
             self.ui.comboBox_4.addItems(condiciones)
             print(f"✅ Condiciones cargadas: {condiciones}")
             
-            print("🎉 Todos los combobox cargados correctamente")
+            print("🎉 Combobox cargado correctamente")
             
         except Exception as e:
             print(f"❌ Error crítico al cargar combobox: {e}")
@@ -76,11 +72,8 @@ class EditarCorralController(QtWidgets.QDialog):
     def cargar_valores_minimos(self):
         """Carga valores mínimos en caso de error"""
         try:
-            self.ui.comboBox_3.clear()
-            self.ui.comboBox_3.addItems(["Norte"])
-            
             self.ui.comboBox_4.clear()
-            self.ui.comboBox_4.addItems(["Bueno"])
+            self.ui.comboBox_4.addItems(["Buena"])
             
             print("🆘 Valores mínimos cargados por error")
         except Exception as e:
@@ -95,32 +88,34 @@ class EditarCorralController(QtWidgets.QDialog):
         try:
             print(f"🔄 Cargando datos del corral: {self.corral_original}")
             
+            # Nombre del corral
             self.ui.lineEdit_2.setText(self.corral_original.get('nombre', ''))
             
+            # Ubicación (ahora es lineEdit en lugar de combobox)
             ubicacion = self.corral_original.get('ubicacion', '')
-            index_ubicacion = self.ui.comboBox_3.findText(ubicacion)
-            if index_ubicacion >= 0:
-                self.ui.comboBox_3.setCurrentIndex(index_ubicacion)
-            else:
-                self.ui.comboBox_3.setEditText(ubicacion)
+            self.ui.lineEdit.setText(ubicacion)
             
+            # Capacidad actual
             capacidad_actual = self.corral_original.get('capacidad_actual', '0')
             try:
                 self.ui.spinBox.setValue(int(capacidad_actual))
             except (ValueError, TypeError):
                 self.ui.spinBox.setValue(0)
             
+            # Capacidad máxima
             capacidad_maxima = self.corral_original.get('capacidad_maxima', '10')
             try:
                 self.ui.spinBox_2.setValue(int(capacidad_maxima))
             except (ValueError, TypeError):
                 self.ui.spinBox_2.setValue(10)
             
-            condicion = self.corral_original.get('condicion', 'Bueno')
+            # Condición
+            condicion = self.corral_original.get('condicion', 'Buena')
             index_condicion = self.ui.comboBox_4.findText(condicion)
             if index_condicion >= 0:
                 self.ui.comboBox_4.setCurrentIndex(index_condicion)
             
+            # Fecha de mantenimiento
             fecha_mantenimiento = self.corral_original.get('fecha_mantenimiento')
             if fecha_mantenimiento:
                 try:
@@ -141,6 +136,7 @@ class EditarCorralController(QtWidgets.QDialog):
             else:
                 self.ui.dateEdit.setDate(QtCore.QDate.currentDate())
             
+            # Observaciones
             observaciones = self.corral_original.get('observaciones', '')
             self.ui.textEdit.setPlainText(observaciones if observaciones else '')
             
@@ -159,6 +155,12 @@ class EditarCorralController(QtWidgets.QDialog):
             if not nombre:
                 QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Nombre es obligatorio")
                 self.ui.lineEdit_2.setFocus()
+                return False
+            
+            ubicacion = self.ui.lineEdit.text().strip()
+            if not ubicacion:
+                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Ubicación es obligatorio")
+                self.ui.lineEdit.setFocus()
                 return False
             
             capacidad_actual = self.ui.spinBox.value()
@@ -207,7 +209,7 @@ class EditarCorralController(QtWidgets.QDialog):
             # Obtener datos del formulario
             identificador_original = self.corral_original.get('identificador')
             nombre = self.ui.lineEdit_2.text().strip()
-            ubicacion = self.ui.comboBox_3.currentText().strip()
+            ubicacion = self.ui.lineEdit.text().strip()  # Ahora es lineEdit
             capacidad_maxima = str(self.ui.spinBox_2.value())
             capacidad_actual = str(self.ui.spinBox.value())
             fecha_mantenimiento = self.ui.dateEdit.date().toString("yyyy-MM-dd")
@@ -260,7 +262,7 @@ class EditarCorralController(QtWidgets.QDialog):
         return {
             'identificador': self.corral_original.get('identificador'),
             'nombre': self.ui.lineEdit_2.text().strip(),
-            'ubicacion': self.ui.comboBox_3.currentText().strip(),
+            'ubicacion': self.ui.lineEdit.text().strip(),  # Ahora es lineEdit
             'capacidad_maxima': str(self.ui.spinBox_2.value()),
             'capacidad_actual': str(self.ui.spinBox.value()),
             'fecha_mantenimiento': self.ui.dateEdit.date().toString("yyyy-MM-dd"),

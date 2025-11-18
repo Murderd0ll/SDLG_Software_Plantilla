@@ -61,6 +61,97 @@ class AnimalesController:
             print(f"❌ Error en setup_connections: {e}")
             import traceback
             traceback.print_exc()
+
+    # === NUEVOS MÉTODOS PARA CONTROL DE CAPACIDAD DE CORRALES ===
+    
+    def verificar_corrales_disponibles(self):
+        """Verifica si hay corrales disponibles antes de abrir el diálogo de agregar"""
+        try:
+            corrales_disponibles = self.db.obtener_corrales_disponibles()
+            if not corrales_disponibles:
+                QtWidgets.QMessageBox.warning(
+                    self.animales_widget,
+                    "Sin corrales disponibles",
+                    "No hay corrales con capacidad disponible en este momento.\n\n"
+                    "Por favor, agregue más corrales o libere espacio en los existentes "
+                    "antes de agregar nuevos animales."
+                )
+                return False
+            return True
+        except Exception as e:
+            print(f"❌ Error verificando corrales disponibles: {e}")
+            return True  # Por seguridad, permitir abrir el diálogo si hay error
+    
+    def mostrar_info_capacidad_corrales(self):
+        """Muestra información sobre la capacidad actual de los corrales"""
+        try:
+            corrales_data = self.db.obtener_corrales_completos()
+            if not corrales_data:
+                return
+                
+            mensaje = "📊 Capacidad actual de corrales:\n\n"
+            
+            for corral in corrales_data:
+                identcorral, nomcorral, ubicorral, capmax, capactual, fechamant, condicion, observacioncorral = corral
+                animales_actuales = self.db.contar_animales_en_corral(nomcorral)
+                
+                if capmax and capmax > 0:
+                    disponible = capmax - animales_actuales
+                    estado = "✅ Disponible" if disponible > 0 else "❌ Lleno"
+                    mensaje += f"• {nomcorral}: {animales_actuales}/{capmax} animales ({estado})\n"
+                else:
+                    mensaje += f"• {nomcorral}: {animales_actuales} animales (Sin límite)\n"
+            
+            QtWidgets.QMessageBox.information(
+                self.animales_widget,
+                "Información de Corrales",
+                mensaje
+            )
+            
+        except Exception as e:
+            print(f"❌ Error mostrando info de capacidad: {e}")
+    
+    def agregar_animal(self):
+        """Abre diálogo para agregar nuevo animal - CON VERIFICACIÓN DE CAPACIDAD"""
+        try:
+            print("📝 Abriendo diálogo para agregar animal...")
+            
+            # Verificar si hay corrales disponibles antes de abrir el diálogo
+            if not self.verificar_corrales_disponibles():
+                # Opcional: mostrar información detallada de capacidad
+                respuesta = QtWidgets.QMessageBox.question(
+                    self.animales_widget,
+                    "Corrales llenos",
+                    "No hay corrales con capacidad disponible.\n\n"
+                    "¿Desea ver la información detallada de capacidad de corrales?",
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+                )
+                
+                if respuesta == QtWidgets.QMessageBox.Yes:
+                    self.mostrar_info_capacidad_corrales()
+                return
+            
+            # Crear y mostrar el diálogo modal
+            dialog = AgregarAnimalController(
+                parent=self.animales_widget, 
+                bitacora_controller=self.bitacora_controller
+            )
+            resultado = dialog.exec_()
+            
+            # Si se guardó correctamente, recargar la tabla
+            if resultado == QtWidgets.QDialog.Accepted:
+                self.cargar_animales()
+                print("✅ Animal agregado, tabla actualizada")
+                
+        except Exception as e:
+            print(f"❌ Error al abrir diálogo de agregar: {e}")
+            QtWidgets.QMessageBox.critical(
+                self.animales_widget, 
+                "Error", 
+                f"No se pudo abrir el formulario: {str(e)}"
+            )
+
+    # === FIN DE NUEVOS MÉTODOS ===
     
     def configurar_tabla(self):
         """Configura el aspecto y comportamiento de la tabla"""
@@ -161,7 +252,13 @@ class AnimalesController:
                     "Información", 
                     "No se encontraron animales en la base de datos."
                 )
-            
+
+            print("🔍 Verificando estatus de animales encontrados:")
+            for animal in animales:
+                estatus = animal[9] if len(animal) > 9 else "N/A"  # Estatus está en posición 9
+                arete = animal[1] if len(animal) > 1 else "N/A"
+                print(f"   - Arete: {arete}, Estatus: {estatus}")
+
             self.llenar_tabla(animales)
         except Exception as e:
             print(f"❌ Error al cargar animales: {e}")
@@ -539,29 +636,6 @@ class AnimalesController:
         except Exception as e:
             print(f"❌ Error al agregar botones: {e}")
     
-    def agregar_animal(self):
-        """Abre diálogo para agregar nuevo animal"""
-        try:
-            print("📝 Abriendo diálogo para agregar animal...")
-            
-            # Crear y mostrar el diálogo modal
-            dialog = AgregarAnimalController(parent=self.animales_widget, 
-            bitacora_controller=self.bitacora_controller)
-            resultado = dialog.exec_()
-            
-            # Si se guardó correctamente, recargar la tabla
-            if resultado == QtWidgets.QDialog.Accepted:
-                self.cargar_animales()
-                print("✅ Animal agregado, tabla actualizada")
-                
-        except Exception as e:
-            print(f"❌ Error al abrir diálogo de agregar: {e}")
-            QtWidgets.QMessageBox.critical(
-                self.animales_widget, 
-                "Error", 
-                f"No se pudo abrir el formulario: {str(e)}"
-            )
-    
     def editar_animal(self, arete_animal):
         """Abre diálogo para editar animal existente"""
         try:
@@ -691,7 +765,7 @@ class AnimalesController:
             print(f"❤️ Abriendo registro de salud para animal arete: {arete_animal}")
             
             # Importar aquí para evitar dependencias circulares
-            from agregarsalud_controller import AgregarSaludController
+            from controllers.agregarsalud_controller import AgregarSaludController
             
             # Crear y mostrar el diálogo de salud
             dialog = AgregarSaludController(
@@ -737,7 +811,7 @@ class AnimalesController:
                 texto = self.lineEdit.text().strip()
                 if texto:
                     print(f"🔍 Buscando animales: '{texto}'")
-                    animales = self.db.buscar_animales_por_nombre(texto)
+                    animales = self.db.buscar_animales_en_todos_los_campos(texto)
                     print(f"📊 {len(animales)} animales encontrados en la búsqueda")
                 else:
                     animales = self.db.obtener_animales()
@@ -754,7 +828,7 @@ class AnimalesController:
         try:
             print(f"🐄 Abriendo registro de reproducción para animal arete: {arete_animal}")
         
-            from agregarreproduccion_controller import AgregarReproduccionController
+            from controllers.agregarreproduccion_controller import AgregarReproduccionController
         
         # ✅ OBTENER LA VENTANA PRINCIPAL
             main_window = self._obtener_main_window()

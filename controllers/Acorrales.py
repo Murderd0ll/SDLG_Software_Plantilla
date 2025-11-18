@@ -57,12 +57,9 @@ class AgregarCorralController(QtWidgets.QDialog):
     def configurar_combobox_condicion(self):
         """Configura el combobox con las opciones de condición"""
         condiciones = [
-            "Excelente",
             "Buena", 
             "Regular",
-            "Mala",
-            "En reparación",
-            "Deshabilitado"
+            "No apto",
         ]
         
         self.ui.comboBox_4.clear()

@@ -2,7 +2,7 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtCore import pyqtSignal
-from sidebar import MainWindow
+from controllers.sidebar import MainWindow
 from Esidebar import EMainWindow  # Importar el sidebar para empleados
 from database import Database
 
@@ -137,8 +137,15 @@ class LoginController:
             
             if usuario_data:
                 # Login exitoso
-                id_usuario, nombre_usuario, nombre_completo, rol = usuario_data
-                self.login_exitoso(id_usuario, nombre_usuario, nombre_completo, rol)
+                id_usuario = usuario_data[0]
+                nombre_usuario = usuario_data[1]
+                nombre_completo = usuario_data[2]
+                rol = usuario_data[3]
+                telefono = usuario_data[4] if len(usuario_data) > 4 else None
+                
+                print(f"✅ Credenciales válidas - ID: {id_usuario}, Usuario: {nombre_usuario}, Nombre: {nombre_completo}, Rol: {rol}")
+                
+                self.login_exitoso(id_usuario, nombre_usuario, nombre_completo, rol, telefono)
             else:
                 # Credenciales incorrectas
                 self.mostrar_error("Credenciales incorrectas", 
@@ -148,8 +155,8 @@ class LoginController:
             print(f"❌ Error en validar_login: {e}")
             self.mostrar_error("Error", f"Error al validar credenciales: {str(e)}")
 
-    def login_exitoso(self, id_usuario, nombre_usuario, nombre_completo, rol):
-        """Manejar el login exitoso según el rol del usuario - CORREGIDO"""
+    def login_exitoso(self, id_usuario, nombre_usuario, nombre_completo, rol, telefono=None):
+        """Manejar el login exitoso según el rol del usuario - VERSIÓN MEJORADA"""
         try:
             print(f"✅ Login exitoso - Usuario: {nombre_completo}, Rol: {rol}")
             print("🔄 Abriendo aplicación principal...")
@@ -162,7 +169,8 @@ class LoginController:
                 'id': id_usuario,
                 'usuario': nombre_usuario,
                 'nombre': nombre_completo,
-                'rol': rol
+                'rol': rol,
+                'telefono': telefono or ''
             }
             
             print(f"👤 Creando sidebar con usuario: {usuario_actual}")
@@ -182,28 +190,38 @@ class LoginController:
                 print("👨‍💼 Abriendo interfaz de Usuario...")
                 self.main_window = EMainWindow(usuario_actual=usuario_actual)
                 
-                # ✅ VERIFICAR QUE EL USUARIO SE ESTABLECIÓ CORRECTAMENTE
-                if hasattr(self.main_window, 'usuario_actual'):
-                    print(f"✅ Usuario establecido en EMainWindow: {self.main_window.usuario_actual}")
+                # ✅ INICIALIZAR CONTROLADOR DE BITÁCORA INMEDIATAMENTE
+                if hasattr(self.main_window, 'set_usuario_actual'):
+                    self.main_window.set_usuario_actual(usuario_actual)
+                    print(f"✅ Usuario establecido en EMainWindow: {usuario_actual}")
                 else:
                     print("❌ No se pudo establecer usuario en EMainWindow")
             
-            # ✅ VERIFICAR CONTROLADOR DE BITÁCORA
+            # ✅ VERIFICAR CONTROLADOR DE BITÁCORA - MEJORADO
             if hasattr(self.main_window, 'bitacora_controller'):
+                print("✅ Controlador de bitácora encontrado en main_window")
                 if hasattr(self.main_window.bitacora_controller, 'usuario_actual'):
                     print(f"✅ Usuario en bitácora: {self.main_window.bitacora_controller.usuario_actual}")
                 else:
-                    print("❌ No hay usuario en controlador de bitácora")
+                    print("⚠️  No hay usuario en controlador de bitácora (puede ser normal)")
             else:
-                print("❌ No se encontró controlador de bitácora")
+                print("⚠️  No se encontró controlador de bitácora (puede ser normal para empleados)")
             
             # Mostrar la ventana principal
             self.main_window.show()
             
-            # ✅ REGISTRAR LOGIN EN BITÁCORA
-            if hasattr(self.main_window, 'bitacora_controller') and self.main_window.bitacora_controller:
-                self.main_window.bitacora_controller.registrar_login(nombre_completo)
-                print("✅ Login registrado en bitácora")
+            # ✅ REGISTRAR LOGIN EN BITÁCORA - MEJORADO CON MANEJO DE ERRORES
+            try:
+                if hasattr(self.main_window, 'bitacora_controller') and self.main_window.bitacora_controller:
+                    if hasattr(self.main_window.bitacora_controller, 'registrar_login'):
+                        self.main_window.bitacora_controller.registrar_login(nombre_completo)
+                        print("✅ Login registrado en bitácora")
+                    else:
+                        print("⚠️  Método registrar_login no disponible en bitácora")
+                else:
+                    print("⚠️  No se pudo registrar login en bitácora: controlador no disponible")
+            except Exception as e:
+                print(f"⚠️  Error registrando login en bitácora: {e}")
             
             # ✅ CONFIGURAR CIERRE DE SESIÓN
             self.configurar_cierre_sesion()

@@ -1,63 +1,65 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtGui, QtWidgets
-from ui.editaranimal_ui import Ui_Dialog
+from ui.agregarbeceani_ui import Ui_Dialog
 from database import Database
 import os
 from pathlib import Path
 
-class EditarAnimalController(QtWidgets.QDialog):
-    def __init__(self, animal_data=None, parent=None, bitacora_controller=None):
+class AgregarBecerroAAnimalesController(QtWidgets.QDialog):
+    def __init__(self, becerro_data=None, parent=None, bitacora_controller=None):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.db = Database()
         self.bitacora_controller = bitacora_controller
         
+        # Datos del becerro que se va a transferir
+        self.becerro_data = becerro_data
+        self.arete_original = becerro_data.get('arete', '') if becerro_data else ''
+        
         # Variable para almacenar la foto
         self.foto_data = None
         self.foto_ruta = None
-        self.animal_original = animal_data  # Datos originales del animal
-        self.arete_original = animal_data.get('arete', '') if animal_data else ''
         
         self.setup_connections()
         self.configurar_combobox()
         self.cargar_datos_combo()
-        self.cargar_datos_animal()
+        self.cargar_datos_becerro()
         
     def setup_connections(self):
         """Configura las conexiones de los botones"""
         self.ui.pushButton.clicked.connect(self.reject)  # Cancelar
-        self.ui.pushButton_2.clicked.connect(self.guardar_cambios)  # Guardar
+        self.ui.pushButton_2.clicked.connect(self.guardar_animal)  # Guardar como animal
         self.ui.indexbtn2.clicked.connect(self.subir_foto)  # Subir archivo
         
     def configurar_combobox(self):
-        """Configura los combobox para ser editables según corresponda"""
+        """Configura los combobox para ser editables según sea necesario"""
         # Combobox editables
         self.ui.comboBox.setEditable(True)    # Corral
+        self.ui.comboBox_2.setEditable(True)  # Sexo (aunque normalmente no se edita)
+        self.ui.comboBox_3.setEditable(True)  # Estatus
         
-        # Combobox no editables (valores fijos)
-        self.ui.comboBox_2.setEditable(False)  # Sexo
-        self.ui.comboBox_3.setEditable(False)  # Estatus
+        # Los lineEdit para raza, tipo producción y tipo alimento ya son editables
         
     def cargar_datos_combo(self):
         """Carga datos en los combobox desde la base de datos"""
         try:
-            print("🔄 Iniciando carga de datos para editar animal...")
+            print("🔄 Iniciando carga de datos para transferir becerro a animal...")
             
-            # 1. SEXO - Valores fijos
+            # 1. SEXO - Valores fijos (pero editable por si acaso)
             self.ui.comboBox_2.clear()
             sexos = ["Macho", "Hembra"]
             self.ui.comboBox_2.addItems(sexos)
             print(f"✅ Sexos cargados: {sexos}")
             
-            # 2. ESTATUS - Valores fijos
+            # 2. ESTATUS - Valores comunes para animales
             self.ui.comboBox_3.clear()
-            estatus = ["Activo", "Inactivo", "Vendido", "Muerto"]
+            estatus = ["Activo", "En producción", "Enfermo", "Vendido", "Muerto", "Inactivo"]
             self.ui.comboBox_3.addItems(estatus)
             print(f"✅ Estatus cargados: {estatus}")
             
-            # 3. CORRALES - Solo los disponibles (con capacidad) + el corral actual
-            corral_actual = self.animal_original.get('corral', '') if self.animal_original else ''
+            # 3. CORRALES - Solo los disponibles (con capacidad) + el corral actual del becerro
+            corral_actual = self.becerro_data.get('corral', '') if self.becerro_data else ''
             corrales_data = self.db.obtener_corrales_disponibles()
             
             # Si el corral actual no está en los disponibles, lo agregamos
@@ -128,7 +130,15 @@ class EditarAnimalController(QtWidgets.QDialog):
                     "No se encontraron corrales en el sistema."
                 )
             
-            print("🎉 Datos cargados correctamente para editar animal")
+            # 4. TIPOS DE PRODUCCIÓN - Valores comunes
+            tipos_produccion = ["Leche", "Carne", "Doble propósito", "Cría", "Trabajo"]
+            self.ui.lineEdit_7.setText(tipos_produccion[0])  # Valor por defecto
+            
+            # 5. TIPOS DE ALIMENTO - Valores comunes
+            tipos_alimento = ["Pastura", "Granos", "Concentrado", "Mixto", "Suplementado"]
+            self.ui.lineEdit_6.setText(tipos_alimento[0])  # Valor por defecto
+            
+            print("🎉 Datos cargados correctamente para transferir becerro a animal")
             
         except Exception as e:
             print(f"❌ Error crítico al cargar datos: {e}")
@@ -144,55 +154,51 @@ class EditarAnimalController(QtWidgets.QDialog):
         
         # Estatus
         self.ui.comboBox_3.clear()
-        self.ui.comboBox_3.addItems(["Activo", "Inactivo", "Vendido", "Muerto"])
+        self.ui.comboBox_3.addItems(["Activo", "En producción"])
         
-        # Limpiar los demás campos
+        # Corral
         self.ui.comboBox.clear()
-    
-    def cargar_datos_animal(self):
-        """Carga los datos del animal en el formulario"""
-        if not self.animal_original:
-            print("❌ No hay datos de animal para cargar")
+        self.ui.comboBox.addItem("Corral 1")
+        
+    def cargar_datos_becerro(self):
+        """Carga los datos del becerro en el formulario de animal"""
+        if not self.becerro_data:
+            print("❌ No hay datos de becerro para cargar")
             return
             
         try:
-            print(f"🔄 Cargando datos del animal: {self.animal_original}")
+            print(f"🔄 Cargando datos del becerro para transferir: {self.becerro_data}")
             
-            # Campos básicos - arete en dos lugares diferentes
-            arete = self.animal_original.get('arete', '')
+            # Campos básicos - arete en dos lugares
+            arete = self.becerro_data.get('arete', '')
             self.ui.lineEdit.setText(arete)  # Arete editable principal
-            self.ui.lineEdit_5.setText(arete)  # Arete en la esquina superior derecha (solo lectura)
-            self.ui.lineEdit_5.setReadOnly(True)  # Hacerlo de solo lectura
+            self.ui.lineEdit_8.setText(arete)  # Arete en la esquina superior derecha (solo lectura)
+            self.ui.lineEdit_8.setReadOnly(True)
             
-            self.ui.lineEdit_2.setText(self.animal_original.get('nombre', ''))
+            # Nombre
+            self.ui.lineEdit_2.setText(self.becerro_data.get('nombre', ''))
             
-            # Combobox - establecer valores
-            sexo = self.animal_original.get('sexo', 'Macho')
+            # Corral (ya se estableció en cargar_datos_combo)
+            # Solo nos aseguramos de que esté seleccionado el correcto
+            
+            # Sexo
+            sexo = self.becerro_data.get('sexo', 'Macho')
             index_sexo = self.ui.comboBox_2.findText(sexo)
             if index_sexo >= 0:
                 self.ui.comboBox_2.setCurrentIndex(index_sexo)
             
-            # El corral ya se estableció en cargar_datos_combo()
-            # Aquí solo nos aseguramos de que esté seleccionado el correcto
+            # Raza
+            raza = self.becerro_data.get('raza', '')
+            self.ui.lineEdit_5.setText(raza)
             
-            # Estatus
-            estatus = self.animal_original.get('estatus', 'Activo')
+            # Estatus - por defecto "Activo" para animales nuevos
+            estatus = "Activo"
             index_estatus = self.ui.comboBox_3.findText(estatus)
             if index_estatus >= 0:
                 self.ui.comboBox_3.setCurrentIndex(index_estatus)
             
-            # Campos que ahora son lineedits
-            raza = self.animal_original.get('raza', '')
-            self.ui.lineEdit_3.setText(raza)  # Raza
-            
-            tipo_produccion = self.animal_original.get('tipo_produccion', '')
-            self.ui.lineEdit_6.setText(tipo_produccion)  # Tipo de producción
-            
-            tipo_alimento = self.animal_original.get('tipo_alimento', '')
-            self.ui.lineEdit_7.setText(tipo_alimento)  # Tipo de alimento
-            
             # Fecha de nacimiento
-            fecha_nacimiento = self.animal_original.get('fecha_nacimiento', '')
+            fecha_nacimiento = self.becerro_data.get('nacimiento', '')
             if fecha_nacimiento:
                 try:
                     if isinstance(fecha_nacimiento, str):
@@ -201,30 +207,29 @@ class EditarAnimalController(QtWidgets.QDialog):
                         qdate = QtCore.QDate(fecha_nacimiento)
                     self.ui.dateEdit.setDate(qdate)
                 except:
-                    # Si hay error con la fecha, usar fecha actual
                     self.ui.dateEdit.setDate(QtCore.QDate.currentDate())
                     print("⚠️ Error al cargar fecha, usando fecha actual")
             
             # Observaciones
-            observaciones = self.animal_original.get('observaciones', '')
+            observaciones = self.becerro_data.get('observacion', '')
             if hasattr(self.ui, 'textEdit') and observaciones:
                 self.ui.textEdit.setPlainText(observaciones)
             
             # Foto - cargar si existe
-            foto_data = self.animal_original.get('foto')
+            foto_data = self.becerro_data.get('foto')
             if foto_data:
                 self.foto_data = foto_data
                 self.ui.indexbtn2.setText("✓ Foto Cargada")
                 self.ui.indexbtn2.setStyleSheet("QPushButton { background-color: #27ae60; color: white; }")
-                self.ui.lineEdit_4.setText("Foto cargada desde BD")
-                print("✅ Foto del animal cargada desde BD")
+                self.ui.lineEdit_4.setText("Foto cargada desde becerro")
+                print("✅ Foto del becerro cargada para transferencia")
             else:
                 self.ui.lineEdit_4.clear()
             
-            print("🎉 Datos del animal cargados correctamente")
+            print("🎉 Datos del becerro cargados correctamente para transferencia")
             
         except Exception as e:
-            print(f"❌ Error al cargar datos del animal: {e}")
+            print(f"❌ Error al cargar datos del becerro: {e}")
             import traceback
             traceback.print_exc()
     
@@ -237,10 +242,8 @@ class EditarAnimalController(QtWidgets.QDialog):
     def subir_foto(self):
         """Abre un diálogo para seleccionar y cargar una foto"""
         try:
-            # Configurar los filtros de archivo
             filtros = "Imágenes (*.png *.jpg *.jpeg *.bmp *.gif *.tiff);;Todos los archivos (*)"
             
-            # Abrir diálogo de selección de archivo
             ruta_archivo, _ = QtWidgets.QFileDialog.getOpenFileName(
                 self, 
                 "Seleccionar foto del animal", 
@@ -249,9 +252,8 @@ class EditarAnimalController(QtWidgets.QDialog):
             )
             
             if ruta_archivo:
-                # Verificar tamaño del archivo (máximo 5MB)
                 tamaño_archivo = os.path.getsize(ruta_archivo)
-                if tamaño_archivo > 5 * 1024 * 1024:  # 5MB en bytes
+                if tamaño_archivo > 5 * 1024 * 1024:
                     QtWidgets.QMessageBox.warning(
                         self, 
                         "Archivo muy grande", 
@@ -259,15 +261,11 @@ class EditarAnimalController(QtWidgets.QDialog):
                     )
                     return
                 
-                # Leer el archivo como bytes
                 with open(ruta_archivo, 'rb') as archivo:
                     self.foto_data = archivo.read()
                     self.foto_ruta = ruta_archivo
                 
-                # Mostrar información al usuario
                 nombre_archivo = Path(ruta_archivo).name
-                
-                # Actualizar la interfaz
                 self.ui.lineEdit_4.setText(nombre_archivo)
                 self.ui.indexbtn2.setText("✓ Foto Cargada")
                 self.ui.indexbtn2.setStyleSheet("QPushButton { background-color: #27ae60; color: white; }")
@@ -282,46 +280,11 @@ class EditarAnimalController(QtWidgets.QDialog):
                 f"No se pudo cargar la foto: {str(e)}"
             )
     
-    def validar_datos(self):
-        """Valida que los datos ingresados sean correctos"""
-        try:
-            arete = self.ui.lineEdit.text().strip()
-            nombre = self.ui.lineEdit_2.text().strip()
-            
-            if not arete:
-                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Arete es obligatorio")
-                self.ui.lineEdit.setFocus()
-                return False
-                
-            if not nombre:
-                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Nombre es obligatorio")
-                self.ui.lineEdit_2.setFocus()
-                return False
-            
-            # Verificar si el arete ya existe (solo si cambió el arete)
-            if arete != self.arete_original:
-                animal_existente = self.db.obtener_animal_por_arete(arete)
-                if animal_existente:
-                    QtWidgets.QMessageBox.warning(
-                        self, 
-                        "Arete duplicado", 
-                        f"Ya existe un animal con el arete: {arete}"
-                    )
-                    self.ui.lineEdit.setFocus()
-                    return False
-                
-            return True
-            
-        except Exception as e:
-            print(f"❌ Error en validación: {e}")
-            QtWidgets.QMessageBox.critical(self, "Error", f"Error en validación: {str(e)}")
-            return False
-
     def validar_capacidad_corral(self, corral_destino: str) -> bool:
         """Valida que el corral destino tenga capacidad disponible"""
         try:
-            # Obtener el corral actual del animal
-            corral_actual = self.animal_original.get('corral', '')
+            # Obtener el corral actual del becerro
+            corral_actual = self.becerro_data.get('corral', '') if self.becerro_data else ''
             
             # Si es el mismo corral, no hay problema de capacidad
             if corral_destino == corral_actual:
@@ -349,8 +312,79 @@ class EditarAnimalController(QtWidgets.QDialog):
             print(f"❌ Error validando capacidad del corral: {e}")
             return True  # Por seguridad, permitir continuar si hay error
     
-    def guardar_cambios(self):
-        """Guarda los cambios del animal en la base de datos"""
+    def validar_datos(self):
+        """Valida que los datos ingresados sean correctos"""
+        try:
+            arete = self.ui.lineEdit.text().strip()
+            nombre = self.ui.lineEdit_2.text().strip()
+            corral_completo = self.ui.comboBox.currentText().strip()
+            corral = corral_completo.split(' (')[0]  # Solo el nombre del corral
+            sexo = self.ui.comboBox_2.currentText().strip()
+            raza = self.ui.lineEdit_5.text().strip()
+            tipo_produccion = self.ui.lineEdit_7.text().strip()
+            tipo_alimento = self.ui.lineEdit_6.text().strip()
+            estatus = self.ui.comboBox_3.currentText().strip()
+            
+            if not arete:
+                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Arete es obligatorio")
+                self.ui.lineEdit.setFocus()
+                return False
+                
+            if not nombre:
+                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Nombre es obligatorio")
+                self.ui.lineEdit_2.setFocus()
+                return False
+                
+            if not corral:
+                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Corral es obligatorio")
+                self.ui.comboBox.setFocus()
+                return False
+                
+            if not sexo:
+                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Sexo es obligatorio")
+                self.ui.comboBox_2.setFocus()
+                return False
+                
+            if not raza:
+                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Raza es obligatorio")
+                self.ui.lineEdit_5.setFocus()
+                return False
+                
+            if not tipo_produccion:
+                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Tipo de producción es obligatorio")
+                self.ui.lineEdit_7.setFocus()
+                return False
+                
+            if not tipo_alimento:
+                QtWidgets.QMessageBox.warning(self, "Advertencia", "El campo Tipo de alimento es obligatorio")
+                self.ui.lineEdit_6.setFocus()
+                return False
+            
+            # Validar capacidad del corral
+            if not self.validar_capacidad_corral(corral):
+                return False
+            
+            # Verificar si el arete ya existe en animales (si cambió el arete)
+            if arete != self.arete_original:
+                animal_existente = self.db.obtener_animal_por_arete(arete)
+                if animal_existente:
+                    QtWidgets.QMessageBox.warning(
+                        self, 
+                        "Arete duplicado", 
+                        f"Ya existe un animal con el arete: {arete}"
+                    )
+                    self.ui.lineEdit.setFocus()
+                    return False
+                
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error en validación: {e}")
+            QtWidgets.QMessageBox.critical(self, "Error", f"Error en validación: {str(e)}")
+            return False
+    
+    def guardar_animal(self):
+        """Guarda el becerro como animal y lo elimina de la tabla de becerros"""
         try:
             if not self.validar_datos():
                 return
@@ -359,64 +393,37 @@ class EditarAnimalController(QtWidgets.QDialog):
             arete_original = self.arete_original
             arete = self.ui.lineEdit.text().strip()
             nombre = self.ui.lineEdit_2.text().strip()
-            sexo = self.ui.comboBox_2.currentText()
-            raza = self.ui.lineEdit_3.text().strip()  # Raza (lineEdit)
-            tipo_produccion = self.ui.lineEdit_6.text().strip()  # Tipo de producción (lineEdit)
-            tipo_alimento = self.ui.lineEdit_7.text().strip()  # Tipo de alimento (lineEdit)
-            fecha_nacimiento = self.ui.dateEdit.date().toString("yyyy-MM-dd")
-            
-            # Obtener corral (quitando la información de capacidad del texto)
             corral_completo = self.ui.comboBox.currentText().strip()
             corral = corral_completo.split(' (')[0]  # Solo el nombre del corral
-            
-            estatus = self.ui.comboBox_3.currentText()  # Estatus (combobox)
+            sexo = self.ui.comboBox_2.currentText().strip()
+            raza = self.ui.lineEdit_5.text().strip()
+            tipo_produccion = self.ui.lineEdit_7.text().strip()
+            tipo_alimento = self.ui.lineEdit_6.text().strip()
+            fecha_nacimiento = self.ui.dateEdit.date().toString("yyyy-MM-dd")
+            estatus = self.ui.comboBox_3.currentText().strip()
             
             # Obtener observaciones
             observaciones = self.obtener_texto_observaciones()
             
-            print(f"📝 Guardando cambios del animal: {nombre}, Arete: {arete}")
-            print(f"   Arete original: {arete_original}")
-            print(f"   Sexo: {sexo}, Raza: {raza}")
-            print(f"   Producción: {tipo_produccion}, Alimento: {tipo_alimento}")
-            print(f"   Corral: {corral}, Estatus: {estatus}")
-            print(f"   Observaciones: {observaciones}")
-            print(f"   Foto actualizada: {'Sí' if self.foto_data else 'No'}")
+            print(f"📝 Guardando becerro como animal: {nombre}, Arete: {arete}")
+            print(f"   Corral: {corral}, Sexo: {sexo}, Raza: {raza}")
+            print(f"   Tipo producción: {tipo_produccion}, Tipo alimento: {tipo_alimento}")
+            print(f"   Estatus: {estatus}")
+            print(f"   Foto transferida: {'Sí' if self.foto_data else 'No'}")
             
-            # Validar capacidad del corral destino
-            if not self.validar_capacidad_corral(corral):
-                return
-            
-            # ✅ REGISTRAR EN BITÁCORA ANTES DE ACTUALIZAR
+            # ✅ REGISTRAR EN BITÁCORA LA TRANSFERENCIA
             if self.bitacora_controller:
-                cambios = []
-                if arete != arete_original:
-                    cambios.append(f"Arete: {arete_original} → {arete}")
-                if nombre != self.animal_original.get('nombre', ''):
-                    cambios.append(f"Nombre: {self.animal_original.get('nombre', '')} → {nombre}")
-                if sexo != self.animal_original.get('sexo', ''):
-                    cambios.append(f"Sexo: {self.animal_original.get('sexo', '')} → {sexo}")
-                if raza != self.animal_original.get('raza', ''):
-                    cambios.append(f"Raza: {self.animal_original.get('raza', '')} → {raza}")
-                if tipo_produccion != self.animal_original.get('tipo_produccion', ''):
-                    cambios.append(f"Tipo producción: {self.animal_original.get('tipo_produccion', '')} → {tipo_produccion}")
-                if tipo_alimento != self.animal_original.get('tipo_alimento', ''):
-                    cambios.append(f"Tipo alimento: {self.animal_original.get('tipo_alimento', '')} → {tipo_alimento}")
-                if corral != self.animal_original.get('corral', ''):
-                    cambios.append(f"Corral: {self.animal_original.get('corral', '')} → {corral}")
-                if estatus != self.animal_original.get('estatus', ''):
-                    cambios.append(f"Estatus: {self.animal_original.get('estatus', '')} → {estatus}")
-                
-                if cambios:
-                    cambios_str = ", ".join(cambios)
-                    self.bitacora_controller.registrar_edicion_animal(
-                        arete=arete_original,
-                        cambios=cambios_str
-                    )
-                    print("✅ Edición registrada en bitácora con cambios detallados")
+                self.bitacora_controller.registrar_accion(
+                    modulo="Transferencia",
+                    accion="TRANSFERIR",
+                    descripcion=f"Transferencia de becerro a animal: {nombre}",
+                    detalles=f"Becerro {arete_original} transferido a animales con arete {arete}",
+                    arete_afectado=arete_original
+                )
+                print("✅ Transferencia registrada en bitácora")
             
-            # Actualizar en la base de datos
-            if self.db.actualizar_animal(
-                arete_original=arete_original,
+            # 1. INSERTAR EN TABLA DE ANIMALES
+            if self.db.insertar_animal(
                 arete=arete,
                 nombre=nombre,
                 sexo=sexo,
@@ -426,30 +433,56 @@ class EditarAnimalController(QtWidgets.QDialog):
                 fecha_nacimiento=fecha_nacimiento,
                 corral=corral,
                 estatus=estatus,
-                observaciones=observaciones,
-                foto=self.foto_data  # Incluir la foto como BLOB (puede ser None)
+                observaciones=observaciones if observaciones else None,
+                foto=self.foto_data
             ):
-                QtWidgets.QMessageBox.information(self, "Éxito", "Animal actualizado correctamente")
-                self.accept()
+                print("✅ Animal insertado correctamente en tganado")
+                
+                # 2. ELIMINAR DE TABLA DE BECERROS
+                if self.db.eliminar_becerro_por_arete(arete_original):
+                    print("✅ Becerro eliminado correctamente de tbecerros")
+                    
+                    QtWidgets.QMessageBox.information(
+                        self, 
+                        "Éxito", 
+                        f"Becerro '{nombre}' transferido correctamente a animales y eliminado de becerros"
+                    )
+                    self.accept()
+                else:
+                    # Si no se pudo eliminar el becerro, revertir la inserción del animal
+                    self.db.eliminar_animal_por_arete(arete)
+                    QtWidgets.QMessageBox.warning(
+                        self, 
+                        "Error", 
+                        "Error al eliminar el becerro. La operación fue revertida."
+                    )
             else:
-                QtWidgets.QMessageBox.warning(self, "Error", "Error al actualizar el animal")
+                QtWidgets.QMessageBox.warning(
+                    self, 
+                    "Error", 
+                    "Error al insertar el animal en la base de datos"
+                )
                 
         except Exception as e:
-            print(f"❌ Error al actualizar animal: {e}")
-            QtWidgets.QMessageBox.critical(self, "Error", f"Error al actualizar: {str(e)}")
+            print(f"❌ Error al transferir becerro a animal: {e}")
+            QtWidgets.QMessageBox.critical(
+                self, 
+                "Error", 
+                f"Error durante la transferencia: {str(e)}"
+            )
     
-    def get_datos_actualizados(self):
-        """Retorna los datos actualizados del animal"""
+    def get_datos_animal(self):
+        """Retorna los datos del animal creado"""
         return {
             'arete': self.ui.lineEdit.text().strip(),
             'nombre': self.ui.lineEdit_2.text().strip(),
-            'sexo': self.ui.comboBox_2.currentText(),
-            'raza': self.ui.lineEdit_3.text().strip(),  # Raza (lineEdit)
-            'tipo_produccion': self.ui.lineEdit_6.text().strip(),  # Tipo de producción (lineEdit)
-            'tipo_alimento': self.ui.lineEdit_7.text().strip(),  # Tipo de alimento (lineEdit)
+            'corral': self.ui.comboBox.currentText().strip().split(' (')[0],  # Solo el nombre del corral
+            'sexo': self.ui.comboBox_2.currentText().strip(),
+            'raza': self.ui.lineEdit_5.text().strip(),
+            'tipo_produccion': self.ui.lineEdit_7.text().strip(),
+            'tipo_alimento': self.ui.lineEdit_6.text().strip(),
             'fecha_nacimiento': self.ui.dateEdit.date().toString("yyyy-MM-dd"),
-            'corral': self.ui.comboBox.currentText().strip(),
-            'estatus': self.ui.comboBox_3.currentText(),  # Estatus (combobox)
+            'estatus': self.ui.comboBox_3.currentText().strip(),
             'observaciones': self.obtener_texto_observaciones(),
             'foto': self.foto_data
         }

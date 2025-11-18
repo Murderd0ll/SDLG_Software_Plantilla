@@ -35,7 +35,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap resource="resources.qrc">:/icons/img/icons/Npropietarios.png</pixmap>
+         <pixmap resource="../../resources.qrc">:/icons/img/icons/Npropietarios.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
@@ -77,6 +77,38 @@
     <widget class="QWidget" name="widget_2" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
+       <widget class="QLabel" name="label_4">
+        <property name="minimumSize">
+         <size>
+          <width>15</width>
+          <height>15</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>15</width>
+          <height>15</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="../../resources.qrc">:/icons/img/icons/search.png</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Buscar</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLineEdit" name="lineEdit"/>
       </item>
       <item>
@@ -85,7 +117,7 @@
          <string>Agregar</string>
         </property>
         <property name="icon">
-         <iconset resource="resources.qrc">
+         <iconset resource="../../resources.qrc">
           <normaloff>:/icons/img/icons/agregar.png</normaloff>:/icons/img/icons/agregar.png</iconset>
         </property>
         <property name="iconSize">
@@ -173,6 +205,7 @@
  <resources>
   <include location="resources.qrc"/>
   <include location="../../.designer/backup/resources.qrc"/>
+  <include location="../../resources.qrc"/>
  </resources>
  <connections/>
 </ui>

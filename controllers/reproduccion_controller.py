@@ -1,4 +1,4 @@
-# reproduccion_controller.py - VERSIÓN CORREGIDA
+# reproduccion_controller.py - VERSIÓN COMPLETA CORREGIDA
 from PyQt5 import QtCore, QtGui, QtWidgets
 from database import Database
 from datetime import datetime
@@ -11,7 +11,6 @@ class ReproduccionController:
         self.db = Database()
         self.setup_connections()
         self.configurar_tabla()
-        self.configurar_fechas()
         print("✅ ReproduccionController inicializado")
         
         # Variable para controlar diálogos abiertos
@@ -28,8 +27,6 @@ class ReproduccionController:
             # Buscar elementos según el diseño UI
             self.lineEdit = self.reproduccion_widget.findChild(QtWidgets.QLineEdit, "lineEdit")  # Buscador general
             self.lineEdit_5 = self.reproduccion_widget.findChild(QtWidgets.QLineEdit, "lineEdit_5")  # Filtro por arete
-            self.dateEdit = self.reproduccion_widget.findChild(QtWidgets.QDateEdit, "dateEdit")  # Fecha inicio
-            self.dateEdit_2 = self.reproduccion_widget.findChild(QtWidgets.QDateEdit, "dateEdit_2")  # Fecha fin
             self.pushButton = self.reproduccion_widget.findChild(QtWidgets.QPushButton, "pushButton")  # Botón Exportar PDF
             self.tableWidget = self.reproduccion_widget.findChild(QtWidgets.QTableWidget, "tableWidget")  # Tabla principal
             
@@ -41,11 +38,6 @@ class ReproduccionController:
             if self.lineEdit_5:
                 self.lineEdit_5.textChanged.connect(self.filtrar_por_arete)
                 print("✅ Filtro por arete conectado")
-                
-            if self.dateEdit and self.dateEdit_2:
-                self.dateEdit.dateChanged.connect(self.filtrar_por_fecha)
-                self.dateEdit_2.dateChanged.connect(self.filtrar_por_fecha)
-                print("✅ Filtros por fecha conectados")
                 
             if self.pushButton:
                 self.pushButton.clicked.connect(self.exportar_a_pdf)
@@ -59,22 +51,6 @@ class ReproduccionController:
             print(f"❌ Error en setup_connections: {e}")
             import traceback
             traceback.print_exc()
-    
-    def configurar_fechas(self):
-        """Configura los dateEdit con fechas por defecto"""
-        try:
-            if self.dateEdit and self.dateEdit_2:
-                # Fecha inicio: hace 30 días
-                fecha_inicio = QtCore.QDate.currentDate().addDays(-30)
-                self.dateEdit.setDate(fecha_inicio)
-                
-                # Fecha fin: hoy
-                fecha_fin = QtCore.QDate.currentDate()
-                self.dateEdit_2.setDate(fecha_fin)
-                
-                print("✅ Fechas configuradas correctamente")
-        except Exception as e:
-            print(f"❌ Error configurando fechas: {e}")
     
     def configurar_tabla(self):
         """Configura el aspecto y comportamiento de la tabla según el diseño"""
@@ -177,60 +153,73 @@ class ReproduccionController:
             return []
     
     def llenar_tabla(self, registros):
-        """Llena la tabla con los datos de los registros de reproducción"""
+        """Llena la tabla con los datos de los registros de reproducción - CORREGIDO"""
         if not self.tableWidget:
             print("❌ No hay tableWidget disponible")
             return
 
         try:
+            # Limpiar la tabla completamente
             self.tableWidget.setRowCount(0)
+            
+            print(f"🔄 Llenando tabla con {len(registros)} registros...")
 
             for row_number, registro in enumerate(registros):
+                # Insertar nueva fila
                 self.tableWidget.insertRow(row_number)
                 
-                # ID (0) - id_reproduccion en posición 0
-                id_reproduccion = registro[0] if len(registro) > 0 else ""
-                id_item = QtWidgets.QTableWidgetItem(str(id_reproduccion if id_reproduccion else ""))
+                # Debug: mostrar qué registro se está procesando
+                print(f"📝 Procesando registro {row_number}: {registro}")
+                
+                # ID (0) - idreprod en posición 0
+                id_reproduccion = registro[0] if len(registro) > 0 and registro[0] is not None else ""
+                id_item = QtWidgets.QTableWidgetItem(str(id_reproduccion))
                 self.tableWidget.setItem(row_number, 0, id_item)
                 
                 # Arete Animal (1) - areteanimal en posición 1
-                arete = registro[1] if len(registro) > 1 else ""
-                arete_item = QtWidgets.QTableWidgetItem(str(arete if arete else ""))
+                arete = registro[1] if len(registro) > 1 and registro[1] is not None else ""
+                arete_item = QtWidgets.QTableWidgetItem(str(arete))
                 self.tableWidget.setItem(row_number, 1, arete_item)
                 
                 # Cargada (2) - cargada en posición 2
-                cargada = registro[2] if len(registro) > 2 else ""
-                cargada_item = QtWidgets.QTableWidgetItem(str(cargada if cargada else ""))
+                cargada = registro[2] if len(registro) > 2 and registro[2] is not None else ""
+                cargada_item = QtWidgets.QTableWidgetItem(str(cargada))
                 self.tableWidget.setItem(row_number, 2, cargada_item)
                 
                 # Cantidad de Partos (3) - cantpartos en posición 3
-                cant_partos = registro[3] if len(registro) > 3 else ""
-                cant_partos_item = QtWidgets.QTableWidgetItem(str(cant_partos if cant_partos else ""))
+                cant_partos = registro[3] if len(registro) > 3 and registro[3] is not None else ""
+                cant_partos_item = QtWidgets.QTableWidgetItem(str(cant_partos))
                 self.tableWidget.setItem(row_number, 3, cant_partos_item)
                 
                 # Fecha Servicio Actual (4) - fservicioactual en posición 4
-                fecha_servicio = registro[4] if len(registro) > 4 else ""
-                fecha_servicio_item = QtWidgets.QTableWidgetItem(str(fecha_servicio if fecha_servicio else ""))
+                fecha_servicio = registro[4] if len(registro) > 4 and registro[4] is not None else ""
+                fecha_servicio_item = QtWidgets.QTableWidgetItem(str(fecha_servicio))
                 self.tableWidget.setItem(row_number, 4, fecha_servicio_item)
                 
                 # Fecha Aproximada de Parto (5) - faproxparto en posición 5
-                fecha_parto = registro[5] if len(registro) > 5 else ""
-                fecha_parto_item = QtWidgets.QTableWidgetItem(str(fecha_parto if fecha_parto else ""))
+                fecha_parto = registro[5] if len(registro) > 5 and registro[5] is not None else ""
+                fecha_parto_item = QtWidgets.QTableWidgetItem(str(fecha_parto))
                 self.tableWidget.setItem(row_number, 5, fecha_parto_item)
                 
                 # Fecha Nuevo Servicio (6) - fnuevoservicio en posición 6
-                fecha_nuevo_servicio = registro[6] if len(registro) > 6 else ""
-                fecha_nuevo_servicio_item = QtWidgets.QTableWidgetItem(str(fecha_nuevo_servicio if fecha_nuevo_servicio else ""))
+                fecha_nuevo_servicio = registro[6] if len(registro) > 6 and registro[6] is not None else ""
+                fecha_nuevo_servicio_item = QtWidgets.QTableWidgetItem(str(fecha_nuevo_servicio))
                 self.tableWidget.setItem(row_number, 6, fecha_nuevo_servicio_item)
                 
                 # Técnica (7) - tecnica en posición 7
-                tecnica = registro[7] if len(registro) > 7 else ""
-                tecnica_item = QtWidgets.QTableWidgetItem(str(tecnica if tecnica else ""))
+                tecnica = registro[7] if len(registro) > 7 and registro[7] is not None else ""
+                tecnica_item = QtWidgets.QTableWidgetItem(str(tecnica))
                 self.tableWidget.setItem(row_number, 7, tecnica_item)
                 
-                # Observaciones (8) - observacion en posición 8
-                observacion = registro[8] if len(registro) > 8 else ""
-                observacion_preview = observacion[:50] + "..." if len(observacion) > 50 else observacion
+                # Observaciones (8) - observacion en posición 8 - CORREGIDO
+                observacion = registro[8] if len(registro) > 8 and registro[8] is not None else ""
+                
+                # Manejar correctamente el caso cuando observacion es None o vacío
+                if observacion and observacion.strip():
+                    observacion_preview = observacion[:50] + "..." if len(observacion) > 50 else observacion
+                else:
+                    observacion_preview = ""  # Cadena vacía en lugar de None
+                    
                 observacion_item = QtWidgets.QTableWidgetItem(observacion_preview)
                 
                 # Guardar observaciones completas para el doble clic
@@ -246,7 +235,10 @@ class ReproduccionController:
                     
                 self.tableWidget.setItem(row_number, 8, observacion_item)
 
-            print(f"✅ Tabla llenada con {len(registros)} registros de reproducción")
+            print(f"✅ Tabla llenada correctamente con {len(registros)} registros de reproducción")
+            
+            # Debug: verificar cuántas filas tiene la tabla
+            print(f"🔍 Tabla tiene {self.tableWidget.rowCount()} filas después de llenar")
 
         except Exception as e:
             print(f"❌ Error al llenar tabla: {e}")
@@ -254,8 +246,12 @@ class ReproduccionController:
             traceback.print_exc()
 
     def mostrar_observaciones_completas(self, observaciones):
-        """Muestra las observaciones completas en un diálogo"""
+        """Muestra las observaciones completas en un diálogo - CORREGIDO"""
         try:
+            # Verificar si las observaciones son None
+            if observaciones is None:
+                observaciones = "Sin observaciones"
+            
             # Crear el diálogo
             dialog = QtWidgets.QDialog(self.reproduccion_widget)
             dialog.setWindowTitle("Observaciones Completas - Registro de Reproducción")
@@ -275,7 +271,7 @@ class ReproduccionController:
             
             # Área de texto para las observaciones
             text_edit = QtWidgets.QTextEdit()
-            text_edit.setPlainText(observaciones)
+            text_edit.setPlainText(str(observaciones))  # Aseguramos que sea string
             text_edit.setReadOnly(True)
             text_edit.setStyleSheet("""
                 QTextEdit {
@@ -322,62 +318,69 @@ class ReproduccionController:
         self.dialogo_abierto = False
 
     def buscar_registros_reproduccion(self):
-        """Busca registros de reproducción según el texto en el buscador general"""
+        """Busca registros de reproducción según el texto en el buscador general, COMBINADO con el filtro de arete actual"""
         try:
             if self.lineEdit:
                 texto = self.lineEdit.text().strip()
-                if texto:
-                    print(f"🔍 Buscando registros de reproducción: '{texto}'")
-                    registros = self.buscar_en_base_datos(texto)
+                arete_actual = self.lineEdit_5.text().strip() if self.lineEdit_5 else ""
+                
+                print(f"🔍 Buscando registros de reproducción: '{texto}' para arete: '{arete_actual}'")
+                
+                if arete_actual:
+                    # Si hay un arete específico seleccionado, buscar SOLO en los registros de ese arete
+                    if texto:
+                        registros = self.db.buscar_registros_reproduccion_por_arete_y_texto(arete_actual, texto)
+                        print(f"📊 Búsqueda combinada: {len(registros)} registros encontrados para arete '{arete_actual}' con texto '{texto}'")
+                    else:
+                        # Si no hay texto de búsqueda, mostrar todos los registros del arete
+                        registros = self.db.obtener_registros_reproduccion_por_arete(arete_actual)
+                        print(f"📊 Mostrando todos los {len(registros)} registros del arete '{arete_actual}'")
                 else:
-                    registros = self.obtener_todos_los_registros_reproduccion()
+                    # Si no hay arete específico, búsqueda general en todos los registros
+                    if texto:
+                        registros = self.db.buscar_registros_reproduccion_en_todos_los_campos(texto)
+                    else:
+                        registros = self.obtener_todos_los_registros_reproduccion()
+                        
                 self.llenar_tabla(registros)
         except Exception as e:
             print(f"❌ Error al buscar registros de reproducción: {e}")
+            import traceback
+            traceback.print_exc()
 
     def filtrar_por_arete(self):
-        """Filtra los registros por el arete del animal"""
+        """Filtra los registros por el arete del animal - MEJORADO"""
         try:
             if self.lineEdit_5:
                 arete = self.lineEdit_5.text().strip()
                 print(f"🔍 Filtrando por arete: '{arete}'")
                 
+                # Limpiar el buscador general cuando se filtra por arete
+                if self.lineEdit:
+                    self.lineEdit.clear()
+                    print("🧹 Buscador general limpiado")
+                
                 if arete:
                     registros = self.db.obtener_registros_reproduccion_por_arete(arete)
                     print(f"📊 {len(registros)} registros encontrados para arete: '{arete}'")
-                else:
-                    registros = self.obtener_todos_los_registros_reproduccion()
                     
-                self.llenar_tabla(registros)
+                    if registros:
+                        for i, reg in enumerate(registros[:3]):
+                            arete_en_registro = reg[1] if len(reg) > 1 and reg[1] is not None else "N/A"
+                            print(f"   Registro {i+1} - Arete en BD: '{arete_en_registro}'")
+                    else:
+                        print(f"⚠️ No se encontraron registros para el arete: '{arete}'")
+                        
+                    self.llenar_tabla(registros)
+                else:
+                    # Si no hay arete, mostrar todos los registros
+                    registros = self.obtener_todos_los_registros_reproduccion()
+                    self.llenar_tabla(registros)
+                    
         except Exception as e:
             print(f"❌ Error al filtrar por arete: {e}")
-
-    def filtrar_por_fecha(self):
-        """Filtra los registros por rango de fechas de servicio"""
-        try:
-            if self.dateEdit and self.dateEdit_2:
-                fecha_inicio = self.dateEdit.date().toString("yyyy-MM-dd")
-                fecha_fin = self.dateEdit_2.date().toString("yyyy-MM-dd")
-                
-                print(f"📅 Filtrando por fecha de servicio: {fecha_inicio} a {fecha_fin}")
-                
-                # Obtener registros filtrados por fecha
-                registros = self.db.obtener_registros_reproduccion_por_fecha(fecha_inicio, fecha_fin)
-                print(f"📊 {len(registros)} registros encontrados en el rango de fechas")
-                
-                self.llenar_tabla(registros)
-                
-        except Exception as e:
-            print(f"❌ Error al filtrar por fecha: {e}")
-
-    def buscar_en_base_datos(self, texto):
-        """Busca registros en la base de datos por texto"""
-        try:
-            registros = self.db.buscar_registros_reproduccion(texto)
-            return registros
-        except Exception as e:
-            print(f"❌ Error en búsqueda de base de datos: {e}")
-            return []
+            import traceback
+            traceback.print_exc()
 
     def exportar_a_pdf(self):
         """Exporta los registros actuales a PDF"""
@@ -501,7 +504,7 @@ class ReproduccionController:
         self.cargar_registros_reproduccion()
 
     def cargar_datos(self):
-        """Método para cargar datos cuando se abre la página"""
+        """Método para cargar datos cuando se opens la página"""
         print("🐄 Cargando página de reproducción...")
         self.cargar_registros_reproduccion()
 
@@ -513,13 +516,18 @@ class ReproduccionController:
 
     # Método para integración con RbuscarController
     def mostrar_registros_por_arete(self, arete):
-        """Método público para que RbuscarController pueda mostrar registros específicos"""
+        """Método público para que RbuscarController pueda mostrar registros específicos - MEJORADO"""
         try:
             print(f"🐄 Mostrando registros de reproducción para arete: {arete}")
             
             # Actualizar el campo de arete
             if self.lineEdit_5:
                 self.lineEdit_5.setText(arete)
+            
+            # Limpiar el buscador general
+            if self.lineEdit:
+                self.lineEdit.clear()
+                print("🧹 Buscador general limpiado al mostrar registros por arete")
             
             # Filtrar por arete
             self.filtrar_por_arete()

@@ -1,4 +1,4 @@
-# salud_controller.py - VERSIÓN CORREGIDA
+# salud_controller.py - VERSIÓN CON CALENDARIOS
 from PyQt5 import QtCore, QtGui, QtWidgets
 from database import Database
 from datetime import datetime
@@ -53,7 +53,7 @@ class SaludController:
                 
             if self.tableWidget:
                 print("✅ TableWidget encontrado")
-                self.configurar_tabla()
+                # No llamar configurar_tabla aquí porque ya se llamó en __init__
                 
         except Exception as e:
             print(f"❌ Error en setup_connections: {e}")
@@ -61,18 +61,72 @@ class SaludController:
             traceback.print_exc()
     
     def configurar_fechas(self):
-        """Configura los dateEdit con fechas por defecto"""
+        """Configura los dateEdit con fechas por defecto y calendarios"""
         try:
             if self.dateEdit and self.dateEdit_2:
-                # Fecha inicio: hace 30 días
+                # Configurar para que muestren calendarios
+                self.dateEdit.setCalendarPopup(True)
+                self.dateEdit_2.setCalendarPopup(True)
+                
+                # Configurar formato de fecha
+                self.dateEdit.setDisplayFormat("dd/MM/yyyy")
+                self.dateEdit_2.setDisplayFormat("dd/MM/yyyy")
+                
+                # Configurar fechas por defecto
                 fecha_inicio = QtCore.QDate.currentDate().addDays(-30)
                 self.dateEdit.setDate(fecha_inicio)
                 
-                # Fecha fin: hoy
                 fecha_fin = QtCore.QDate.currentDate()
                 self.dateEdit_2.setDate(fecha_fin)
                 
-                print("✅ Fechas configuradas correctamente")
+                # Mejorar apariencia de los dateEdit
+                self.dateEdit.setStyleSheet("""
+                    QDateEdit {
+                        padding: 5px;
+                        border: 1px solid #bdc3c7;
+                        border-radius: 4px;
+                        background-color: white;
+                        min-width: 100px;
+                    }
+                    QDateEdit::drop-down {
+                        subcontrol-origin: padding;
+                        subcontrol-position: top right;
+                        width: 20px;
+                        border-left: 1px solid #bdc3c7;
+                    }
+                    QDateEdit::down-arrow {
+                        image: none;
+                        border-left: 4px solid transparent;
+                        border-right: 4px solid transparent;
+                        border-top: 6px solid #7f8c8d;
+                        margin-right: 5px;
+                    }
+                """)
+                
+                self.dateEdit_2.setStyleSheet("""
+                    QDateEdit {
+                        padding: 5px;
+                        border: 1px solid #bdc3c7;
+                        border-radius: 4px;
+                        background-color: white;
+                        min-width: 100px;
+                    }
+                    QDateEdit::drop-down {
+                        subcontrol-origin: padding;
+                        subcontrol-position: top right;
+                        width: 20px;
+                        border-left: 1px solid #bdc3c7;
+                    }
+                    QDateEdit::down-arrow {
+                        image: none;
+                        border-left: 4px solid transparent;
+                        border-right: 4px solid transparent;
+                        border-top: 6px solid #7f8c8d;
+                        margin-right: 5px;
+                    }
+                """)
+                
+                print("✅ Fechas configuradas correctamente con calendarios")
         except Exception as e:
             print(f"❌ Error configurando fechas: {e}")
     
@@ -82,15 +136,27 @@ class SaludController:
             return
             
         try:
+            # Configurar encabezados de columnas según lo requerido
+            headers = [
+                "Fecha de Revisión",
+                "Nombre del Veterinario", 
+                "Procedimiento",
+                "Medicina Preventiva/Manejo",
+                "Condición de Salud",
+                "Observaciones",
+                "Imagen del Procedimiento"
+            ]
+            self.tableWidget.setColumnCount(len(headers))
+            self.tableWidget.setHorizontalHeaderLabels(headers)
+            
             # Configurar tamaños de columnas según el diseño UI
             self.tableWidget.setColumnWidth(0, 120)  # Fecha de revisión
-            self.tableWidget.setColumnWidth(1, 120)  # Veterinario
-            self.tableWidget.setColumnWidth(2, 150)  # Condición de salud
-            self.tableWidget.setColumnWidth(3, 150)  # Procedimiento
-            self.tableWidget.setColumnWidth(4, 150)  # Medicina preventiva
-            self.tableWidget.setColumnWidth(5, 120)  # Manejo
-            self.tableWidget.setColumnWidth(6, 200)  # Observaciones
-            self.tableWidget.setColumnWidth(7, 150)  # Imagen del procedimiento
+            self.tableWidget.setColumnWidth(1, 150)  # Veterinario
+            self.tableWidget.setColumnWidth(2, 180)  # Procedimiento
+            self.tableWidget.setColumnWidth(3, 200)  # Medicina preventiva/manejo
+            self.tableWidget.setColumnWidth(4, 150)  # Condición de salud
+            self.tableWidget.setColumnWidth(5, 200)  # Observaciones
+            self.tableWidget.setColumnWidth(6, 150)  # Imagen del procedimiento
             
             # Mejorar apariencia
             self.tableWidget.setAlternatingRowColors(True)
@@ -99,6 +165,11 @@ class SaludController:
             self.tableWidget.verticalHeader().setVisible(False)
             
             # Conexión para doble clic en observaciones - SOLO UNA VEZ
+            # Desconectar primero para evitar múltiples conexiones
+            try:
+                self.tableWidget.cellDoubleClicked.disconnect()
+            except:
+                pass
             self.tableWidget.cellDoubleClicked.connect(self.on_cell_double_clicked)
             
             # Estilo para la tabla
@@ -128,7 +199,7 @@ class SaludController:
                 }
             """)
             
-            print("✅ Tabla de salud configurada correctamente")
+            print("✅ Tabla de salud configurada correctamente con los encabezados requeridos")
             
         except Exception as e:
             print(f"❌ Error configurando tabla: {e}")
@@ -139,8 +210,8 @@ class SaludController:
         if self.dialogo_abierto:
             return
             
-        if column == 6:  # Columna de Observaciones
-            observacion_item = self.tableWidget.item(row, 6)
+        if column == 5:  # Columna de Observaciones (ahora en posición 5)
+            observacion_item = self.tableWidget.item(row, 5)
             if observacion_item:
                 observaciones_completas = observacion_item.data(QtCore.Qt.UserRole)
                 if observaciones_completas and observaciones_completas.strip():
@@ -182,7 +253,7 @@ class SaludController:
             return []
     
     def llenar_tabla(self, registros):
-        """Llena la tabla con los datos de los registros de salud"""
+        """Llena la tabla con los datos de los registros de salud - REORGANIZADO"""
         if not self.tableWidget:
             print("❌ No hay tableWidget disponible")
             return
@@ -198,32 +269,27 @@ class SaludController:
                 fecha_item = QtWidgets.QTableWidgetItem(str(fecha_revision if fecha_revision else ""))
                 self.tableWidget.setItem(row_number, 0, fecha_item)
                 
-                # Veterinario (1) - nomvet en posición 3
+                # Nombre del Veterinario (1) - nomvet en posición 3
                 veterinario = registro[3] if len(registro) > 3 else ""
                 veterinario_item = QtWidgets.QTableWidgetItem(str(veterinario if veterinario else ""))
                 self.tableWidget.setItem(row_number, 1, veterinario_item)
                 
-                # Condición de salud (2) - condicionsalud en posición 6
-                condicion = registro[6] if len(registro) > 6 else ""
-                condicion_item = QtWidgets.QTableWidgetItem(str(condicion if condicion else ""))
-                self.tableWidget.setItem(row_number, 2, condicion_item)
-                
-                # Procedimiento (3) - procedimiento en posición 4
+                # Procedimiento (2) - procedimiento en posición 4
                 procedimiento = registro[4] if len(registro) > 4 else ""
                 procedimiento_item = QtWidgets.QTableWidgetItem(str(procedimiento if procedimiento else ""))
-                self.tableWidget.setItem(row_number, 3, procedimiento_item)
+                self.tableWidget.setItem(row_number, 2, procedimiento_item)
                 
-                # Medicina preventiva (4) - medprev en posición 5
+                # Medicina Preventiva/Manejo (3) - SOLO medprev (posición 5)
                 medicina = registro[5] if len(registro) > 5 else ""
                 medicina_item = QtWidgets.QTableWidgetItem(str(medicina if medicina else ""))
-                self.tableWidget.setItem(row_number, 4, medicina_item)
+                self.tableWidget.setItem(row_number, 3, medicina_item)
                 
-                # Manejo (5) - tipoanimal en posición 2
-                manejo = registro[2] if len(registro) > 2 else ""
-                manejo_item = QtWidgets.QTableWidgetItem(str(manejo if manejo else ""))
-                self.tableWidget.setItem(row_number, 5, manejo_item)
+                # Condición de salud (4) - condicionsalud en posición 6
+                condicion = registro[6] if len(registro) > 6 else ""
+                condicion_item = QtWidgets.QTableWidgetItem(str(condicion if condicion else ""))
+                self.tableWidget.setItem(row_number, 4, condicion_item)
                 
-                # Observaciones (6) - observacionsalud en posición 8
+                # Observaciones (5) - observacionsalud en posición 8
                 observacion = registro[8] if len(registro) > 8 else ""
                 observacion_preview = observacion[:50] + "..." if len(observacion) > 50 else observacion
                 observacion_item = QtWidgets.QTableWidgetItem(observacion_preview)
@@ -239,10 +305,10 @@ class SaludController:
                     observacion_item.setToolTip("Sin observaciones")
                     observacion_item.setForeground(QtGui.QColor('#95a5a6'))
                     
-                self.tableWidget.setItem(row_number, 6, observacion_item)
+                self.tableWidget.setItem(row_number, 5, observacion_item)
                 
-                # Imagen del procedimiento (7) - archivo en posición 9
-                self.agregar_boton_imagen(row_number, 7, registro)
+                # Imagen del procedimiento (6) - archivo en posición 9
+                self.agregar_boton_imagen(row_number, 6, registro)
 
             print(f"✅ Tabla llenada con {len(registros)} registros de salud")
 
@@ -413,64 +479,106 @@ class SaludController:
             # Asegurarse de resetear el flag incluso si hay error
             self.dialogo_abierto = False
 
-    def on_dialogo_cerrado(self):
-        """Se llama cuando se cierra un diálogo para resetear el flag"""
+    def on_dialogo_cerrado(self, result=None):
+        """Se llama cuando se cierra un diálogo para resetear el flag - MEJORADO"""
         self.dialogo_abierto = False
 
     def buscar_registros_salud(self):
-        """Busca registros de salud según el texto en el buscador general"""
+        """Busca registros de salud según el texto en el buscador general, COMBINADO con el filtro de arete actual"""
         try:
             if self.lineEdit:
                 texto = self.lineEdit.text().strip()
-                if texto:
-                    print(f"🔍 Buscando registros de salud: '{texto}'")
-                    registros = self.buscar_en_base_datos(texto)
+                arete_actual = self.lineEdit_5.text().strip() if self.lineEdit_5 else ""
+            
+                print(f"🔍 Buscando registros de salud: '{texto}' para arete: '{arete_actual}'")
+            
+                if arete_actual:
+                    # Si hay un arete específico seleccionado, buscar SOLO en los registros de ese arete
+                    if texto:
+                        registros = self.db.buscar_registros_salud_por_arete_y_texto(arete_actual, texto)
+                        print(f"📊 Búsqueda combinada: {len(registros)} registros encontrados para arete '{arete_actual}' con texto '{texto}'")
+                    else:
+                        # Si no hay texto de búsqueda, mostrar todos los registros del arete
+                        registros = self.db.obtener_registros_salud_por_arete(arete_actual)
+                        print(f"📊 Mostrando todos los {len(registros)} registros del arete '{arete_actual}'")
                 else:
-                    registros = self.obtener_todos_los_registros_salud()
+                    # Si no hay arete específico, búsqueda general en todos los registros
+                    if texto:
+                        registros = self.db.buscar_registros_salud_en_todos_los_campos(texto)
+                    else:
+                        registros = self.obtener_todos_los_registros_salud()
+                    
                 self.llenar_tabla(registros)
         except Exception as e:
             print(f"❌ Error al buscar registros de salud: {e}")
+            import traceback
+            traceback.print_exc()
 
     def filtrar_por_arete(self):
-        """Filtra los registros por el arete del animal - CORREGIDO"""
+        """Filtra los registros por el arete del animal - MEJORADO"""
         try:
             if self.lineEdit_5:
                 arete = self.lineEdit_5.text().strip()
                 print(f"🔍 Filtrando por arete: '{arete}'")
-                
+            
+                # Limpiar el buscador general cuando se filtra por arete
+                if self.lineEdit:
+                    self.lineEdit.clear()
+                    print("🧹 Buscador general limpiado")
+            
                 if arete:
                     registros = self.db.obtener_registros_salud_por_arete(arete)
                     print(f"📊 {len(registros)} registros encontrados para arete: '{arete}'")
-                    
-                    # Debug: mostrar qué aretes se están mostrando
+                
                     if registros:
                         for i, reg in enumerate(registros[:3]):
                             arete_en_registro = reg[1] if len(reg) > 1 else "N/A"
                             print(f"   Registro {i+1} - Arete en BD: '{arete_en_registro}'")
-                else:
-                    registros = self.obtener_todos_los_registros_salud()
+                    else:
+                        print(f"⚠️ No se encontraron registros para el arete: '{arete}'")
                     
-                self.llenar_tabla(registros)
+                    self.llenar_tabla(registros)
+                else:
+                    # Si no hay arete, mostrar todos los registros
+                    registros = self.obtener_todos_los_registros_salud()
+                    self.llenar_tabla(registros)
+                
         except Exception as e:
             print(f"❌ Error al filtrar por arete: {e}")
+            import traceback
+            traceback.print_exc()
 
     def filtrar_por_fecha(self):
-        """Filtra los registros por rango de fechas"""
+        """Filtra los registros por rango de fechas - CORREGIDO"""
         try:
             if self.dateEdit and self.dateEdit_2:
-                fecha_inicio = self.dateEdit.date().toString("yyyy-MM-dd")
-                fecha_fin = self.dateEdit_2.date().toString("yyyy-MM-dd")
-                
-                print(f"📅 Filtrando por fecha: {fecha_inicio} a {fecha_fin}")
-                
-                # Obtener registros filtrados por fecha
-                registros = self.db.obtener_registros_salud_por_fecha(fecha_inicio, fecha_fin)
+            # Obtener fechas en formato QDate
+                fecha_inicio_qdate = self.dateEdit.date()
+                fecha_fin_qdate = self.dateEdit_2.date()
+            
+            # Convertir a formato string para la base de datos
+                fecha_inicio = fecha_inicio_qdate.toString("yyyy-MM-dd")
+                fecha_fin = fecha_fin_qdate.toString("yyyy-MM-dd")
+            
+                arete_actual = self.lineEdit_5.text().strip() if self.lineEdit_5 else ""
+            
+                print(f"📅 Filtrando por fecha: {fecha_inicio} a {fecha_fin} para arete: '{arete_actual}'")
+            
+                if arete_actual:
+                # Si hay arete específico, filtrar por fecha SOLO para ese arete
+                    registros = self.db.obtener_registros_salud_por_arete_y_fecha(arete_actual, fecha_inicio, fecha_fin)
+                else:
+                # Si no hay arete específico, filtro general por fecha
+                    registros = self.db.obtener_registros_salud_por_fecha(fecha_inicio, fecha_fin)
+            
                 print(f"📊 {len(registros)} registros encontrados en el rango de fechas")
-                
+            
                 self.llenar_tabla(registros)
-                
+            
         except Exception as e:
             print(f"❌ Error al filtrar por fecha: {e}")
+            import traceback
+            traceback.print_exc()
 
     def buscar_en_base_datos(self, texto):
         """Busca registros en la base de datos por texto"""
@@ -548,7 +656,7 @@ class SaludController:
                         if item is not None:
                             texto = item.text()
                             # Acortar observaciones largas para el PDF
-                            if col == 6 and len(texto) > 100:
+                            if col == 5 and len(texto) > 100:  # Observaciones en columna 5
                                 texto = texto[:100] + "..."
                             fila.append(texto)
                         else:
@@ -621,17 +729,22 @@ class SaludController:
 
     # Método para integración con SbuscarController
     def mostrar_registros_por_arete(self, arete):
-        """Método público para que SbuscarController pueda mostrar registros específicos"""
+        """Método público para que SbuscarController pueda mostrar registros específicos - MEJORADO"""
         try:
             print(f"🏥 Mostrando registros de salud para arete: {arete}")
-            
+        
             # Actualizar el campo de arete
             if self.lineEdit_5:
                 self.lineEdit_5.setText(arete)
-            
-            # Filtrar por arete
+        
+            # Limpiar el buscador general
+            if self.lineEdit:
+                self.lineEdit.clear()
+                print("🧹 Buscador general limpiado al mostrar registros por arete")
+        
+        # Filtrar por arete
             self.filtrar_por_arete()
-            
+        
         except Exception as e:
             print(f"❌ Error mostrando registros por arete: {e}")
 

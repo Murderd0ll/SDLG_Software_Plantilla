@@ -2,7 +2,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ui.agregarusuario_ui import Ui_Dialog
 from database import Database
-import hashlib
+# ⬇️ Eliminamos la importación de hashlib
+# import hashlib
 
 class AgregarUsuarioController(QtWidgets.QDialog):
     def __init__(self, parent=None, bitacora_controller=None):
@@ -32,11 +33,7 @@ class AgregarUsuarioController(QtWidgets.QDialog):
             
         except Exception as e:
             print(f"❌ Error configurando combobox: {e}")
-    
-    def encriptar_contrasena(self, contrasena):
-        """Encripta la contraseña usando SHA-256"""
-        return hashlib.sha256(contrasena.encode()).hexdigest()
-    
+
     def validar_datos(self):
         """Valida que los datos ingresados sean correctos"""
         try:
@@ -115,25 +112,25 @@ class AgregarUsuarioController(QtWidgets.QDialog):
             usuario = self.ui.lineEdit.text().strip()
             nombre = self.ui.lineEdit_2.text().strip()
             telefono = self.ui.lineEdit_3.text().strip()
-            contrasena_plana = self.ui.lineEdit_4.text().strip()
+            contrasena_plana = self.ui.lineEdit_4.text().strip()  # ⬅️ Contraseña en texto plano
             rol = self.ui.comboBox.currentText()
             
-            # Encriptar contraseña
-            contrasena_encriptada = self.encriptar_contrasena(contrasena_plana)
+            # ⬇️ AHORA GUARDAMOS DIRECTAMENTE LA CONTRASEÑA EN TEXTO PLANO
+            # (sin encriptación)
             
             print(f"📝 Guardando usuario: {nombre}, Usuario: {usuario}")
             print(f"   Teléfono: {telefono}, Rol: {rol}")
-            print(f"   Contraseña encriptada: {contrasena_encriptada[:20]}...")
+            print(f"   Contraseña (texto plano): {contrasena_plana}")
             
             # Insertar en la base de datos
             if self.db.insertar_usuario(
                 usuario=usuario,
                 nombre=nombre,
                 telefono=telefono,
-                contrasena=contrasena_encriptada,
+                contrasena=contrasena_plana,  # ⬅️ Enviamos la contraseña en texto plano
                 rol=rol
             ):
-                # ✅ REGISTRAR EN BITÁCORA - AÑADIDO
+                # ✅ REGISTRAR EN BITÁCORA
                 if self.bitacora_controller:
                     datos_usuario = f"Usuario: {usuario}, Nombre: {nombre}, Tel: {telefono}, Rol: {rol}"
                     self.bitacora_controller.registrar_accion(

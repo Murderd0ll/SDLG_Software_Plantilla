@@ -32,13 +32,10 @@ class AgregarAnimalController(QtWidgets.QDialog):
         """Configura los combobox para ser editables según corresponda"""
         # Combobox editables
         self.ui.comboBox.setEditable(True)    # Corral
-        self.ui.comboBox_3.setEditable(True)  # Raza
-        self.ui.comboBox_4.setEditable(True)  # Tipo de producción
-        self.ui.comboBox_5.setEditable(True)  # Tipo de alimento
         
         # Combobox no editables (valores fijos)
         self.ui.comboBox_2.setEditable(False)  # Sexo
-        self.ui.comboBox_6.setEditable(False)  # Estatus
+        self.ui.comboBox_3.setEditable(False)  # Estatus (ahora es comboBox_3)
         
     def configurar_fecha(self):
         """Configura la fecha actual en el dateEdit"""
@@ -48,93 +45,83 @@ class AgregarAnimalController(QtWidgets.QDialog):
     def cargar_datos_combo(self):
         """Carga datos en los combobox desde la base de datos"""
         try:
-            print("🔄 Iniciando carga de datos en combobox para animales...")
-            
-            # 1. SEXO - Valores fijos
+            print("🔄 Iniciando carga de datos para animales...")
+        
+        # 1. SEXO - Valores fijos
             self.ui.comboBox_2.clear()
             sexos = ["Macho", "Hembra"]
             self.ui.comboBox_2.addItems(sexos)
             self.ui.comboBox_2.setCurrentIndex(0)
             print(f"✅ Sexos cargados: {sexos}")
-            
-            # 2. ESTATUS - De BD o valores por defecto
-            self.ui.comboBox_6.clear()
-            estatus = self.db.obtener_estatus_animales()
-            if not estatus:
-                estatus = ["Activo", "Enfermo", "Vendido", "Muerto", "En producción"]
-                print("📋 Usando estatus por defecto para animales")
-            self.ui.comboBox_6.addItems(estatus)
-            self.ui.comboBox_6.setCurrentIndex(0)
-            print(f"✅ Estatus cargados: {estatus}")
-            
-            # 3. CORRALES - De BD
-            corrales_data = self.db.obtener_corrales()
-            self.ui.comboBox.clear()
-            if corrales_data:
-                corrales = [str(corral[1]) for corral in corrales_data]
-                self.ui.comboBox.addItems(corrales)
-                print(f"✅ Corrales cargados: {len(corrales)}")
-            else:
-                self.ui.comboBox.addItems(["Corral 1", "Corral 2", "Corral 3"])
-                print("📋 Usando corrales por defecto")
-            
-            # 4. RAZAS - De BD para animales
-            razas = self.db.obtener_razas_animales()
+        
+        # 2. ESTATUS - Valores fijos (ahora es comboBox_3)
             self.ui.comboBox_3.clear()
-            if razas:
-                self.ui.comboBox_3.addItems(razas)
-                print(f"✅ Razas cargadas: {len(razas)}")
+            estatus = ["Activo", "Inactivo", "Vendido", "Muerto"]
+            self.ui.comboBox_3.addItems(estatus)
+            self.ui.comboBox_3.setCurrentIndex(0)
+            print(f"✅ Estatus cargados: {estatus}")
+
+            # 3. CORRALES - Solo los disponibles (con capacidad)
+            corrales_data = self.db.obtener_corrales_disponibles()
+            self.ui.comboBox.clear()
+
+            if corrales_data:
+                corrales = []
+                for corral in corrales_data:
+                    identcorral, nomcorral, capmax, capactual = corral
+                    animales_actuales = self.db.contar_animales_en_corral(nomcorral)
+                    
+                    try:
+                        if capmax is None or capmax == '':
+                            capmax_int = 0
+                        else:
+                            capmax_int = int(capmax)
+                    except (ValueError, TypeError):
+                        capmax_int = 0
+                    
+                    if capmax_int > 0:
+                        corrales.append(f"{nomcorral} ({animales_actuales}/{capmax_int})")
+                    else:
+                        corrales.append(f"{nomcorral} ({animales_actuales}/∞)")
+
+                self.ui.comboBox.addItems(corrales)
+                print(f"✅ Corrales disponibles cargados: {len(corrales)}")
+            
+                # Si no hay corrales disponibles, mostrar advertencia
+                if len(corrales) == 0:
+                    QtWidgets.QMessageBox.warning(
+                        self,
+                        "Sin corrales disponibles",
+                        "No hay corrales con capacidad disponible. Por favor, agregue más corrales o libere espacio en los existentes."
+                    )
             else:
-                razas_default = ["Angus", "Hereford", "Charolais", "Brahman", "Holstein"]
-                self.ui.comboBox_3.addItems(razas_default)
-                print("📋 Usando razas por defecto")
-            
-            # 5. TIPO DE PRODUCCIÓN - Valores por defecto
-            self.ui.comboBox_4.clear()
-            tipos_produccion = ["Carne", "Leche", "Doble propósito", "Cría"]
-            self.ui.comboBox_4.addItems(tipos_produccion)
-            self.ui.comboBox_4.setCurrentIndex(0)
-            print(f"✅ Tipos de producción cargados: {tipos_produccion}")
-            
-            # 6. TIPO DE ALIMENTO - Valores por defecto
-            self.ui.comboBox_5.clear()
-            tipos_alimento = ["Pastura", "Granos", "Mixto", "Concentrado", "Suplementado"]
-            self.ui.comboBox_5.addItems(tipos_alimento)
-            self.ui.comboBox_5.setCurrentIndex(0)
-            print(f"✅ Tipos de alimento cargados: {tipos_alimento}")
-            
-            print("🎉 Todos los combobox cargados correctamente para animales")
-            
+                print("⚠️ No se encontraron corrales disponibles")
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Sin corrales",
+                    "No se encontraron corrales en el sistema. Por favor, agregue corrales primero."
+                )
+        
+            print("🎉 Datos cargados correctamente para animales")
+        
         except Exception as e:
-            print(f"❌ Error crítico al cargar combobox: {e}")
+            print(f"❌ Error crítico al cargar datos: {e}")
             import traceback
             traceback.print_exc()
             self.cargar_valores_minimos()
     
     def cargar_valores_minimos(self):
         """Carga valores mínimos en caso de error"""
-        try:
-            self.ui.comboBox_2.clear()
-            self.ui.comboBox_2.addItems(["Macho", "Hembra"])
-            
-            self.ui.comboBox_6.clear()
-            self.ui.comboBox_6.addItems(["Activo", "Enfermo"])
-            
-            self.ui.comboBox.clear()
-            self.ui.comboBox.addItems(["Corral 1"])
-            
-            self.ui.comboBox_3.clear()
-            self.ui.comboBox_3.addItems(["Angus"])
-            
-            self.ui.comboBox_4.clear()
-            self.ui.comboBox_4.addItems(["Carne"])
-            
-            self.ui.comboBox_5.clear()
-            self.ui.comboBox_5.addItems(["Pastura"])
-            
-            print("🆘 Valores mínimos cargados por error")
-        except Exception as e:
-            print(f"💥 Error incluso cargando valores mínimos: {e}")
+        # Sexo
+        self.ui.comboBox_2.clear()
+        self.ui.comboBox_2.addItems(["Macho", "Hembra"])
+        
+        # Estatus (ahora es comboBox_3)
+        self.ui.comboBox_3.clear()
+        self.ui.comboBox_3.addItems(["Activo", "Inactivo", "Vendido", "Muerto"])
+        
+        # Limpiar los demás campos
+        self.ui.comboBox.clear()
     
     def obtener_texto_observaciones(self):
         """Obtiene el texto de observaciones del QTextEdit"""
@@ -236,28 +223,36 @@ class AgregarAnimalController(QtWidgets.QDialog):
             if not self.validar_datos():
                 return
             
-        # Obtener datos del formulario
+            # Obtener datos del formulario
             arete = self.ui.lineEdit.text().strip()
             nombre = self.ui.lineEdit_2.text().strip()
             sexo = self.ui.comboBox_2.currentText()
-            raza = self.ui.comboBox_3.currentText().strip()
-            tipo_produccion = self.ui.comboBox_4.currentText().strip()
-            tipo_alimento = self.ui.comboBox_5.currentText().strip()
+            raza = self.ui.lineEdit_5.text().strip()  # Raza (lineEdit)
+            tipo_produccion = self.ui.lineEdit_7.text().strip()  # Tipo de producción (lineEdit)
+            tipo_alimento = self.ui.lineEdit_6.text().strip()  # Tipo de alimento (lineEdit)
             fecha_nacimiento = self.ui.dateEdit.date().toString("yyyy-MM-dd")
-            corral = self.ui.comboBox.currentText().strip()
-            estatus = self.ui.comboBox_6.currentText()
+            
+            corral_completo = self.ui.comboBox.currentText().strip()
+            corral = corral_completo.split(' (')[0]  # Solo el nombre del corral
+            
+            estatus = self.ui.comboBox_3.currentText()  # Estatus (ahora es comboBox_3)
         
-        # Obtener observaciones
+            # Obtener observaciones
             observaciones = self.obtener_texto_observaciones()
+
+            capacidad = self.db.obtener_capacidad_corral(corral)
+            animales_actuales = self.db.contar_animales_en_corral(corral)
         
-            print(f"📝 Guardando animal: {nombre}, Arete: {arete}")
-            print(f"   Sexo: {sexo}, Raza: {raza}")
-            print(f"   Producción: {tipo_produccion}, Alimento: {tipo_alimento}")
-            print(f"   Corral: {corral}, Estatus: {estatus}")
-            print(f"   Observaciones: {observaciones}")
-            print(f"   Foto cargada: {'Sí' if self.foto_data else 'No'}")
+            if capacidad['capacidad_maxima'] > 0 and animales_actuales >= capacidad['capacidad_maxima']:
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Corral lleno",
+                    f"El corral '{corral}' ha alcanzado su capacidad máxima ({capacidad['capacidad_maxima']} animales).\n\n"
+                    f"Por favor, seleccione otro corral con capacidad disponible."
+                )
+                return
         
-        # Insertar en la base de datos
+            # Insertar en la base de datos
             if self.db.insertar_animal(
                 arete=arete,
                 nombre=nombre,
@@ -271,7 +266,7 @@ class AgregarAnimalController(QtWidgets.QDialog):
                 observaciones=observaciones,
                 foto=self.foto_data
             ):
-            # ✅ REGISTRAR EN BITÁCORA - AÑADIDO
+                # ✅ REGISTRAR EN BITÁCORA - AÑADIDO
                 if self.bitacora_controller:
                     datos_animal = f"Arete: {arete}, Nombre: {nombre}, Raza: {raza}, Sexo: {sexo}, Corral: {corral}"
                     self.bitacora_controller.registrar_alta_animal(
@@ -296,12 +291,12 @@ class AgregarAnimalController(QtWidgets.QDialog):
         self.ui.lineEdit.clear()
         self.ui.lineEdit_2.clear()
         self.ui.comboBox_2.setCurrentIndex(0)
-        self.ui.comboBox_3.setCurrentIndex(0)
-        self.ui.comboBox_4.setCurrentIndex(0)
-        self.ui.comboBox_5.setCurrentIndex(0)
+        self.ui.lineEdit_5.clear()  # Raza
+        self.ui.lineEdit_7.clear()  # Tipo de producción
+        self.ui.lineEdit_6.clear()  # Tipo de alimento
         self.ui.comboBox.setCurrentIndex(0)
-        self.ui.comboBox_6.setCurrentIndex(0)
-        self.ui.lineEdit_4.clear()
+        self.ui.comboBox_3.setCurrentIndex(0)  # Estatus (ahora es comboBox_3)
+        self.ui.lineEdit_4.clear()  # Foto
         
         # Limpiar observaciones
         self.limpiar_observaciones()

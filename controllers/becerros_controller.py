@@ -167,6 +167,12 @@ class BecerrosController:
                     "No se encontraron becerros en la base de datos."
                 )
             
+            print("🔍 Verificando estatus de becerros encontrados:")
+            for becerro in becerros:
+                estatus = becerro[8] if len(becerro) > 8 else "N/A"
+                arete = becerro[1] if len(becerro) > 1 else "N/A"
+                print(f"   - Arete: {arete}, Estatus: {estatus}")
+        
             self.llenar_tabla(becerros)
         except Exception as e:
             print(f"❌ Error al cargar becerros: {e}")
@@ -491,6 +497,25 @@ class BecerrosController:
             """)
             btn_editar.clicked.connect(lambda: self.editar_becerro(arete_becerro))  # ✅ ACTUALIZADO
             
+            # ✅ NUEVO BOTÓN: Transferir a animales
+            btn_transferir = QtWidgets.QPushButton("🐄")
+            btn_transferir.setToolTip("Transferir a animales")
+            btn_transferir.setStyleSheet("""
+                QPushButton { 
+                    background-color: #9b59b6; 
+                    color: white; 
+                    border: none; 
+                    padding: 5px; 
+                    border-radius: 3px;
+                    font-size: 12px;
+                    min-width: 25px;
+                }
+                QPushButton:hover {
+                    background-color: #8e44ad;
+                }
+            """)
+            btn_transferir.clicked.connect(lambda: self.transferir_a_animales(arete_becerro))
+
             # Botón eliminar
             btn_eliminar = QtWidgets.QPushButton("🗑️")
             btn_eliminar.setToolTip("Eliminar becerro")
@@ -513,6 +538,7 @@ class BecerrosController:
             # ✅ AGREGAR SOLO 3 BOTONES (sin observaciones)
             layout.addWidget(btn_salud)
             layout.addWidget(btn_editar)
+            layout.addWidget(btn_transferir)
             layout.addWidget(btn_eliminar)
             layout.addStretch()
             
@@ -596,12 +622,74 @@ class BecerrosController:
                 "Error",
                 f"No se pudieron mostrar las observaciones: {str(e)}"
             )
+
+    def verificar_corrales_disponibles(self):
+        """Verifica si hay corrales disponibles antes de abrir el diálogo de agregar"""
+        try:
+            corrales_disponibles = self.db.obtener_corrales_disponibles()
+            if not corrales_disponibles:
+                QtWidgets.QMessageBox.warning(
+                    self.becerros_widget,
+                    "Sin corrales disponibles",
+                    "No hay corrales con capacidad disponible en este momento.\n\n"
+                    "Por favor, agregue más corrales o libere espacio en los existentes "
+                    "antes de agregar nuevos animales."
+                )
+                return False
+            return True
+        except Exception as e:
+            print(f"❌ Error verificando corrales disponibles: {e}")
+            return True  # Por seguridad, permitir abrir el diálogo si hay error
+    
+    def mostrar_info_capacidad_corrales(self):
+        """Muestra información sobre la capacidad actual de los corrales"""
+        try:
+            corrales_data = self.db.obtener_corrales_completos()
+            if not corrales_data:
+                return
+                
+            mensaje = "📊 Capacidad actual de corrales:\n\n"
+            
+            for corral in corrales_data:
+                identcorral, nomcorral, ubicorral, capmax, capactual, fechamant, condicion, observacioncorral = corral
+                animales_actuales = self.db.contar_animales_en_corral(nomcorral)
+                
+                if capmax and capmax > 0:
+                    disponible = capmax - animales_actuales
+                    estado = "✅ Disponible" if disponible > 0 else "❌ Lleno"
+                    mensaje += f"• {nomcorral}: {animales_actuales}/{capmax} animales ({estado})\n"
+                else:
+                    mensaje += f"• {nomcorral}: {animales_actuales} animales (Sin límite)\n"
+            
+            QtWidgets.QMessageBox.information(
+                self.becerros_widget,
+                "Información de Corrales",
+                mensaje
+            )
+            
+        except Exception as e:
+            print(f"❌ Error mostrando info de capacidad: {e}")
+    
     
     def agregar_becerro(self):
         """Abre diálogo para agregar nuevo becerro"""
         try:
             print("📝 Abriendo diálogo para agregar becerro...")
             
+             # Verificar si hay corrales disponibles antes de abrir el diálogo
+            if not self.verificar_corrales_disponibles():
+                # Opcional: mostrar información detallada de capacidad
+                respuesta = QtWidgets.QMessageBox.question(
+                    self.becerros_widget,
+                    "Corrales llenos",
+                    "No hay corrales con capacidad disponible.\n\n"
+                    "¿Desea ver la información detallada de capacidad de corrales?",
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+                )
+                
+                if respuesta == QtWidgets.QMessageBox.Yes:
+                    self.mostrar_info_capacidad_corrales()
+                return
             # Crear y mostrar el diálogo modal
             dialog = AgregarBecerroController(parent=self.becerros_widget, 
                 bitacora_controller=self.bitacora_controller)
@@ -625,7 +713,7 @@ class BecerrosController:
             print(f"❤️ Abriendo registro de salud para becerro arete: {arete_becerro}")
         
             # Importar aquí para evitar dependencias circulares
-            from agregarsalud_controller import AgregarSaludController
+            from controllers.agregarsalud_controller import AgregarSaludController
 
             main_window = self._obtener_main_window()
             # Crear y mostrar el diálogo de salud
@@ -808,21 +896,86 @@ class BecerrosController:
                 "Error",
                 f"Error crítico al eliminar becerro: {str(e)}"
             )
+
+    def transferir_a_animales(self, arete_becerro):
+        """Abre diálogo para transferir becerro a la tabla de animales"""
+        try:
+            print(f"🐄 Transferiendo becerro a animales - Arete: {arete_becerro}")
+        
+        # Obtener datos completos del becerro
+            becerro_data = self.db.obtener_becerro_completo_por_arete(arete_becerro)
+            if not becerro_data:
+                QtWidgets.QMessageBox.warning(
+                    self.becerros_widget, 
+                    "Error", 
+                    f"No se encontró el becerro con arete: {arete_becerro}"
+                )
+                return
+        
+        # Convertir a diccionario para el controller de transferencia
+            datos_becerro = {
+                'arete': becerro_data[1] if len(becerro_data) > 1 else '',
+                'nombre': becerro_data[2] if len(becerro_data) > 2 else '',
+                'peso': becerro_data[3] if len(becerro_data) > 3 else 0.0,
+                'sexo': becerro_data[4] if len(becerro_data) > 4 else 'Macho',
+                'raza': becerro_data[5] if len(becerro_data) > 5 else '',
+                'nacimiento': becerro_data[6] if len(becerro_data) > 6 else '',
+                'corral': becerro_data[7] if len(becerro_data) > 7 else '',
+                'estatus': becerro_data[8] if len(becerro_data) > 8 else 'Activo',
+                'aretemadre': becerro_data[9] if len(becerro_data) > 9 else '',
+                'observacion': becerro_data[10] if len(becerro_data) > 10 else '',
+                'foto': becerro_data[11] if len(becerro_data) > 11 else None
+            }
+        
+            print(f"📋 Datos del becerro a transferir: {datos_becerro['nombre']} (Arete: {datos_becerro['arete']})")
+        
+        # ✅ ABRIR DIÁLOGO DE TRANSFERENCIA
+            from controllers.agregarbeceani_controller import AgregarBecerroAAnimalesController
+        
+            dialog = AgregarBecerroAAnimalesController(
+                becerro_data=datos_becerro,
+                parent=self.becerros_widget,
+                bitacora_controller=self.bitacora_controller
+            )
+            resultado = dialog.exec_()
+        
+        # Si se completó la transferencia, recargar la tabla
+            if resultado == QtWidgets.QDialog.Accepted:
+                self.cargar_becerros()
+                print("✅ Becerro transferido a animales, tabla recargada")
+            
+        except Exception as e:
+            print(f"❌ Error al transferir becerro a animales: {e}")
+            import traceback
+            traceback.print_exc()
+            QtWidgets.QMessageBox.critical(
+                self.becerros_widget,
+                "Error",
+                f"No se pudo abrir el formulario de transferencia: {str(e)}"
+            )
     
     def buscar_becerros(self):
-        """Busca becerros según el texto en el buscador"""
+        """Busca becerros en todos los campos según el texto en el buscador"""
         try:
             if self.lineEdit:
                 texto = self.lineEdit.text().strip()
                 if texto:
-                    print(f"🔍 Buscando becerros: '{texto}'")
-                    becerros = self.db.buscar_becerros_por_nombre(texto)
-                    print(f"📊 {len(becerros)} becerros encontrados en la búsqueda")
+                    print(f"🔍 Buscando becerros en todos los campos: '{texto}'")
+                # Usar la nueva función de búsqueda que busca en todos los campos
+                    becerros = self.db.buscar_becerros_en_todos_los_campos(texto)
+                    print(f"📊 {len(becerros)} becerros encontrados en la búsqueda múltiple")
                 else:
+                # Si no hay texto, cargar todos los becerros
                     becerros = self.db.obtener_becerros()
+                    print("📋 Mostrando todos los becerros")
+            
                 self.llenar_tabla(becerros)
+            
         except Exception as e:
             print(f"❌ Error al buscar becerros: {e}")
+            import traceback
+            traceback.print_exc()
+
     
     # ✅ MÉTODO NUEVO: Para forzar actualización
     def actualizar_tabla(self):

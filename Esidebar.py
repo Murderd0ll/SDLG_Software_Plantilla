@@ -1,23 +1,34 @@
-# Esidebar.py - VERSIÓN COMPLETA DEFINITIVA PARA EMPLEADOS CON BITÁCORA
+# Esidebar.py - VERSIÓN COMPLETA CORREGIDA CON TODAS LAS PÁGINAS
 import sys
 import os
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox
-from PyQt5.QtCore import Qt, pyqtSignal 
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QMessageBox
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5 import QtWidgets, QtCore
 
 from ui.sidebar_ui import Ui_MainWindow
 from ui.becerros_ui import Ui_BecerrosPage
 from ui.animales_ui import Ui_AnimalesPage
 from ui.index_ui import Ui_IndexPage
-from salud_ui import Ui_SaludPage
+from ui.salud_ui import Ui_SaludPage
 from ui.reproduccion_ui import Ui_ReproduccionPage
-from ui.bitacora_ui import Ui_BitacoraPage  # Para crear el controlador de bitácora
+from ui.bitacora_ui import Ui_BitacoraPage
+from ui.corrales_ui import Ui_CorralesPage
+from ui.propietarios_ui import Ui_PropietariosPage
+from ui.reportes_ui import Ui_ReportesPage
+from ui.sbuscar_ui import Ui_SbuscarPage  # ✅ Reportes de Salud
+from ui.rbuscar_ui import Ui_RbuscarPage  # ✅ Reportes de Reproducción
 
 from controllers.becerros_controller import BecerrosController
 from controllers.animales_controller import AnimalesController
 from controllers.index_controller import MainController
-from salud_controller import SaludController
-from reproduccion_controller import ReproduccionController
+from controllers.salud_controller import SaludController
+from controllers.reproduccion_controller import ReproduccionController
 from controllers.bitacora_controller import BitacoraController
+from controllers.corrales_controller import CorralesController
+from controllers.propietarios_controller import PropietariosController
+from controllers.reportes_controller import ReportesController
+from controllers.sbuscar_controller import SbuscarController  # ✅ Controlador Reportes Salud
+from controllers.rbuscar_controller import RbuscarController  # ✅ Controlador Reportes Reproducción
 from database import Database
 
 def cargar_estilos_sidebar(window):
@@ -49,18 +60,46 @@ class EMainWindow(QMainWindow):
 
         self.ui.icon_only_widget.hide()
         
-        # ✅ RECREAR STACKEDWIDGET SOLO CON PÁGINAS PERMITIDAS PARA EMPLEADOS
-        self.recrear_stackedwidget_empleado()
+        # ✅ OCULTAR SOLO BOTONES DE SEGURIDAD Y BITÁCORA
+        self.ocultar_botones_no_permitidos()
+        
+        # ✅ INICIALIZAR CONTROLADOR DE BITÁCORA PRIMERO
+        self.bitacora_controller = None
+        
+        # ✅ CREAR TODAS LAS PÁGINAS PERMITIDAS PARA EMPLEADOS
+        self.crear_paginas_completas()
         
         # CONECTAR SEÑALES
-        self.connect_signals()
+        self.connect_signals_admin_style()
         
-        print(f"✅ Sidebar Empleado inicializado - Usuario: {self.usuario_actual}")
+        print(f"✅ Sidebar Empleado inicializado - Página actual: {self.ui.stackedWidget.currentIndex()}")
+        print(f"👤 Usuario en sidebar: {self.usuario_actual}")
     
-    def recrear_stackedwidget_empleado(self):
-        """Recrea el stackedWidget solo con páginas permitidas para empleados"""
+    def ocultar_botones_no_permitidos(self):
+        """Ocultar solo botones de Seguridad y Bitácora"""
         try:
-            print("🔄 Recreando stackedWidget para empleado...")
+            print("🔒 Ocultando botones de Seguridad y Bitácora para empleados...")
+            
+            botones_a_ocultar = [
+                'seguridadbtn1', 'seguridadbtn2',
+                'bitacorabtn1', 'bitacorabtn2'
+            ]
+            
+            for boton_name in botones_a_ocultar:
+                if hasattr(self.ui, boton_name):
+                    boton = getattr(self.ui, boton_name)
+                    boton.hide()
+                    print(f"✅ Ocultado: {boton_name}")
+                    
+            print("✅ Botones no permitidos ocultados correctamente")
+            
+        except Exception as e:
+            print(f"❌ Error ocultando botones: {e}")
+
+    def crear_paginas_completas(self):
+        """Crear TODAS las páginas permitidas para empleados"""
+        try:
+            print("🔄 Creando páginas COMPLETAS para empleado...")
             
             # 1. LIMPIAR TODAS LAS PÁGINAS EXISTENTES
             while self.ui.stackedWidget.count() > 0:
@@ -68,162 +107,261 @@ class EMainWindow(QMainWindow):
                 if widget:
                     self.ui.stackedWidget.removeWidget(widget)
             
-            # 2. CREAR SOLO PÁGINAS PERMITIDAS PARA EMPLEADOS
+            # 2. CREAR TODAS LAS PÁGINAS PERMITIDAS PARA EMPLEADOS
+            self.crear_pagina_principal(0)
+            self.crear_pagina_becerros(1)
+            self.crear_pagina_animales(2)
+            self.crear_pagina_propietarios(3)
+            self.crear_pagina_corrales(4)
+            self.crear_pagina_salud(5)
+            self.crear_pagina_reproduccion(6)
+            self.crear_pagina_reportes(7)
+            self.crear_pagina_sbuscar(8)  # ✅ Reportes de Salud
+            self.crear_pagina_rbuscar(9)  # ✅ Reportes de Reproducción
+
+            # 3. CONFIGURAR PÁGINA PRINCIPAL COMO INICIAL
+            self.ui.stackedWidget.setCurrentIndex(0)
+            self.ui.indexbtn2.setChecked(True)
             
-            # ✅ PÁGINA PRINCIPAL - ÍNDICE 0
+            # ✅ COMPARTIR CONTROLADOR DE BITÁCORA
+            self.compartir_bitacora_controller()
+            
+            # 4. DIAGNÓSTICO FINAL
+            print("📊 DIAGNÓSTICO FINAL DE PÁGINAS PARA EMPLEADO:")
+            print(f"   📄 Total de páginas creadas: {self.ui.stackedWidget.count()}")
+            for i in range(self.ui.stackedWidget.count()):
+                widget = self.ui.stackedWidget.widget(i)
+                nombre = widget.objectName() if widget and widget.objectName() else f"Página {i}"
+                print(f"   📄 Página {i}: {nombre}")
+                
+        except Exception as e:
+            print(f"❌ Error general creando páginas: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def crear_pagina_principal(self, index):
+        """Crear página principal"""
+        try:
             main_widget = QWidget()
             self.main_ui = Ui_IndexPage()
             self.main_ui.setupUi(main_widget)
             self.ui.stackedWidget.addWidget(main_widget)
             self.main_controller = MainController(main_widget)
-            print("✅ Página principal creada en índice 0")
-            
-            # ✅ PÁGINA BECERROS - ÍNDICE 1
+            print(f"✅ Página principal creada en índice {index}")
+        except Exception as e:
+            print(f"❌ Error creando página principal: {e}")
+            self.crear_widget_vacio(index, "Principal")
+
+    def crear_pagina_becerros(self, index):
+        """Crear página becerros"""
+        try:
             becerros_widget = QWidget()
             self.becerros_ui = Ui_BecerrosPage()
             self.becerros_ui.setupUi(becerros_widget)
             self.ui.stackedWidget.addWidget(becerros_widget)
             self.becerros_controller = BecerrosController(becerros_widget)
-            print("✅ Página becerros creada en índice 1")
-            
-            # ✅ PÁGINA ANIMALES - ÍNDICE 2
+            print(f"✅ Página becerros creada en índice {index}")
+        except Exception as e:
+            print(f"❌ Error creando página becerros: {e}")
+            self.crear_widget_vacio(index, "Becerros")
+
+    def crear_pagina_animales(self, index):
+        """Crear página animales"""
+        try:
             animales_widget = QWidget()
             self.animales_ui = Ui_AnimalesPage()
             self.animales_ui.setupUi(animales_widget)
             self.ui.stackedWidget.addWidget(animales_widget)
             self.animales_controller = AnimalesController(animales_widget)
-            print("✅ Página animales creada en índice 2")
-            
-            # ✅ PÁGINA SALUD - ÍNDICE 3
+            print(f"✅ Página animales creada en índice {index}")
+        except Exception as e:
+            print(f"❌ Error creando página animales: {e}")
+            self.crear_widget_vacio(index, "Animales")
+
+    def crear_pagina_propietarios(self, index):
+        """Crear página propietarios"""
+        try:
+            propietarios_widget = QWidget()
+            self.propietarios_ui = Ui_PropietariosPage()
+            self.propietarios_ui.setupUi(propietarios_widget)
+            self.ui.stackedWidget.addWidget(propietarios_widget)
+            self.propietarios_controller = PropietariosController(propietarios_widget)
+            print(f"✅ Página propietarios creada en índice {index}")
+        except Exception as e:
+            print(f"❌ Error creando página propietarios: {e}")
+            self.crear_widget_vacio(index, "Propietarios")
+
+    def crear_pagina_corrales(self, index):
+        """Crear página corrales"""
+        try:
+            corrales_widget = QWidget()
+            self.corrales_ui = Ui_CorralesPage()
+            self.corrales_ui.setupUi(corrales_widget)
+            self.ui.stackedWidget.addWidget(corrales_widget)
+            self.corrales_controller = CorralesController(corrales_widget)
+            print(f"✅ Página corrales creada en índice {index}")
+        except Exception as e:
+            print(f"❌ Error creando página corrales: {e}")
+            self.crear_widget_vacio(index, "Corrales")
+
+    def crear_pagina_salud(self, index):
+        """Crear página salud"""
+        try:
             salud_widget = QWidget()
             self.salud_ui = Ui_SaludPage()
             self.salud_ui.setupUi(salud_widget)
             self.ui.stackedWidget.addWidget(salud_widget)
             self.salud_controller = SaludController(salud_widget)
-            print("✅ Página salud creada en índice 3")
+            print(f"✅ Página salud creada en índice {index}")
+        except Exception as e:
+            print(f"❌ Error creando página salud: {e}")
+            self.crear_widget_vacio(index, "Salud")
 
-            # ✅ PÁGINA REPRODUCCIÓN - ÍNDICE 4
+    def crear_pagina_reproduccion(self, index):
+        """Crear página reproducción"""
+        try:
             reproduccion_widget = QWidget()
             self.reproduccion_ui = Ui_ReproduccionPage()
             self.reproduccion_ui.setupUi(reproduccion_widget)
             self.ui.stackedWidget.addWidget(reproduccion_widget)
             self.reproduccion_controller = ReproduccionController(reproduccion_widget)
-            print("✅ Página reproducción creada en índice 4")
-
-            # 3. CREAR CONTROLADOR DE BITÁCORA (NO SE AGREGA AL STACKEDWIDGET)
-            self.crear_controlador_bitacora()
-
-            # 4. CONFIGURAR PÁGINA PRINCIPAL COMO INICIAL
-            self.ui.stackedWidget.setCurrentIndex(0)
-            self.ui.indexbtn2.setChecked(True)
-            
-            # ✅ COMPARTIR CONTROLADOR DE BITÁCORA CON OTROS CONTROLADORES
-            self.compartir_bitacora_controller()
-            
-            print("📊 PÁGINAS DISPONIBLES PARA EMPLEADO:")
-            for i in range(self.ui.stackedWidget.count()):
-                print(f"   📄 Página {i}: {self.get_nombre_pagina(i)}")
-                
+            print(f"✅ Página reproducción creada en índice {index}")
         except Exception as e:
-            print(f"❌ Error recreando stackedWidget empleado: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"❌ Error creando página reproducción: {e}")
+            self.crear_widget_vacio(index, "Reproducción")
 
-    def crear_controlador_bitacora(self):
-        """Crea el controlador de bitácora sin agregarlo al stackedWidget"""
+    def crear_pagina_reportes(self, index):
+        """Crear página reportes"""
         try:
-            # Crear un widget temporal para la bitácora (no se muestra)
-            bitacora_widget = QWidget()
-            self.bitacora_ui = Ui_BitacoraPage()
-            self.bitacora_ui.setupUi(bitacora_widget)
-            
-            # ✅ CREAR CONTROLADOR DE BITÁCORA CON USUARIO ACTUAL
-            self.bitacora_controller = BitacoraController(
-                ui=self.bitacora_ui,
-                db=Database(),
-                usuario_actual=self.usuario_actual
-            )
-            print("✅ Controlador de bitácora creado para empleado")
-            
+            reportes_widget = QWidget()
+            self.reportes_ui = Ui_ReportesPage()
+            self.reportes_ui.setupUi(reportes_widget)
+            self.ui.stackedWidget.addWidget(reportes_widget)
+            self.reportes_controller = ReportesController(reportes_widget)
+            print(f"✅ Página reportes creada en índice {index}")
         except Exception as e:
-            print(f"❌ Error creando controlador de bitácora: {e}")
+            print(f"❌ Error creando página reportes: {e}")
+            self.crear_widget_vacio(index, "Reportes")
 
-    def get_nombre_pagina(self, index):
-        """Obtener nombre de página por índice"""
-        paginas = {
-            0: "Página Principal",
-            1: "Becerros",
-            2: "Animales", 
-            3: "Salud",
-            4: "Reproducción"
-        }
-        return paginas.get(index, f"Página {index}")
+    def crear_pagina_sbuscar(self, index):
+        """Crear página reportes de salud (Sbuscar)"""
+        try:
+            sbuscar_widget = QWidget()
+            self.sbuscar_ui = Ui_SbuscarPage()
+            self.sbuscar_ui.setupUi(sbuscar_widget)
+            self.ui.stackedWidget.addWidget(sbuscar_widget)
+            self.sbuscar_controller = SbuscarController(sbuscar_widget)
+            print(f"✅ Página reportes de salud creada en índice {index}")
+        except Exception as e:
+            print(f"❌ Error creando página reportes de salud: {e}")
+            self.crear_widget_vacio(index, "Reportes de Salud")
+
+    def crear_pagina_rbuscar(self, index):
+        """Crear página reportes de reproducción (Rbuscar)"""
+        try:
+            rbuscar_widget = QWidget()
+            self.rbuscar_ui = Ui_RbuscarPage()
+            self.rbuscar_ui.setupUi(rbuscar_widget)
+            self.ui.stackedWidget.addWidget(rbuscar_widget)
+            self.rbuscar_controller = RbuscarController(rbuscar_widget)
+            print(f"✅ Página reportes de reproducción creada en índice {index}")
+        except Exception as e:
+            print(f"❌ Error creando página reportes de reproducción: {e}")
+            self.crear_widget_vacio(index, "Reportes de Reproducción")
+
+    def crear_widget_vacio(self, index, nombre_pagina):
+        """Crear un widget vacío cuando falla la creación de una página"""
+        try:
+            widget_vacio = QWidget()
+            widget_vacio.setObjectName(f"widget_vacio_{nombre_pagina}")
+            label = QLabel(f"Página {nombre_pagina} no disponible\nError al cargar")
+            label.setAlignment(Qt.AlignCenter)
+            label.setStyleSheet("color: red; font-size: 16px;")
+            layout = QtWidgets.QVBoxLayout()
+            layout.addWidget(label)
+            widget_vacio.setLayout(layout)
+            self.ui.stackedWidget.addWidget(widget_vacio)
+            print(f"⚠️  Widget vacío creado para {nombre_pagina} en índice {index}")
+        except Exception as e:
+            print(f"❌ Error creando widget vacío: {e}")
 
     def compartir_bitacora_controller(self):
         """Compartir el controlador de bitácora con otros controladores"""
         try:
             print("🔄 Compartiendo controlador de bitácora en Esidebar...")
             
+            if not self.bitacora_controller:
+                print("⚠️  No hay controlador de bitácora para compartir")
+                return
+            
             controladores = [
-                ('becerros_controller', self.becerros_controller),
                 ('animales_controller', self.animales_controller),
+                ('becerros_controller', self.becerros_controller),
+                ('propietarios_controller', self.propietarios_controller),
+                ('corrales_controller', self.corrales_controller),
                 ('salud_controller', self.salud_controller),
-                ('reproduccion_controller', self.reproduccion_controller)
+                ('reproduccion_controller', self.reproduccion_controller),
+                ('reportes_controller', self.reportes_controller),
+                ('sbuscar_controller', self.sbuscar_controller),
+                ('rbuscar_controller', self.rbuscar_controller)
             ]
             
             for nombre, controlador in controladores:
-                if controlador and hasattr(controlador, 'set_bitacora_controller'):
-                    controlador.set_bitacora_controller(self.bitacora_controller)
-                    print(f"✅ Bitácora compartida con {nombre}")
-                elif controlador:
-                    print(f"⚠️  {nombre} no tiene método set_bitacora_controller")
-                else:
-                    print(f"❌ {nombre} no disponible")
+                if controlador:
+                    try:
+                        if hasattr(controlador, 'set_bitacora_controller'):
+                            controlador.set_bitacora_controller(self.bitacora_controller)
+                            print(f"✅ Bitácora compartida con {nombre}")
+                        else:
+                            controlador.bitacora_controller = self.bitacora_controller
+                            print(f"✅ Bitácora asignada directamente a {nombre}")
+                    except Exception as e:
+                        print(f"⚠️  Error asignando bitácora a {nombre}: {e}")
+                    
+            print("🎯 Bitácora compartida exitosamente")
                     
         except Exception as e:
             print(f"❌ Error compartiendo controlador de bitácora: {e}")
 
-    def get_bitacora_controller(self):
-        """Obtener el controlador de bitácora para compartirlo"""
-        return self.bitacora_controller
-
-    def set_usuario_actual(self, usuario_actual):
-        """Establecer usuario actual"""
-        self.usuario_actual = usuario_actual
-        
-        # ✅ ACTUALIZAR USUARIO EN CONTROLADOR DE BITÁCORA
-        if hasattr(self, 'bitacora_controller') and self.bitacora_controller:
-            self.bitacora_controller.set_usuario_actual(usuario_actual)
-            print(f"✅ Usuario actual actualizado en bitácora: {usuario_actual.get('nombre', 'N/A')}")
-
-    def connect_signals(self):
-        """Conectar todas las señales de los botones de manera segura"""
+    def connect_signals_admin_style(self):
+        """Conectar señales usando la misma estructura que el sidebar de admin"""
         try:
+            print("🔌 Conectando señales del sidebar empleado...")
+            
             # Botones del índice/inicio
-            self._connect_button(self.ui.indexbtn1, self.on_indexbtn1_toggled)
-            self._connect_button(self.ui.indexbtn2, self.on_indexbtn2_toggled)
+            self._connect_button_safe(self.ui.indexbtn1, self.on_indexbtn1_toggled)
+            self._connect_button_safe(self.ui.indexbtn2, self.on_indexbtn2_toggled)
             
             # Botones de becerros
-            self._connect_button(self.ui.becerrosbtn1, self.on_becerrosbtn1_toggled)
-            self._connect_button(self.ui.becerrosbtn2, self.on_becerrosbtn2_toggled)
+            self._connect_button_safe(self.ui.becerrosbtn1, self.on_becerrosbtn1_toggled)
+            self._connect_button_safe(self.ui.becerrosbtn2, self.on_becerrosbtn2_toggled)
             
             # Botones de animales
-            self._connect_button(self.ui.animalesbtn1, self.on_animalesbtn1_toggled)
-            self._connect_button(self.ui.animalesbtn2, self.on_animalesbtn2_toggled)
+            self._connect_button_safe(self.ui.animalesbtn1, self.on_animalesbtn1_toggled)
+            self._connect_button_safe(self.ui.animalesbtn2, self.on_animalesbtn2_toggled)
             
-            # Botones de salud
-            self._connect_button(self.ui.saludbtn1, self.on_saludbtn1_toggled)
-            self._connect_button(self.ui.saludbtn2, self.on_saludbtn2_toggled)
+            # Botones de propietarios
+            self._connect_button_safe(self.ui.propietariosbtn1, self.on_propietariosbtn1_toggled)
+            self._connect_button_safe(self.ui.propietariosbtn2, self.on_propietariosbtn2_toggled)
             
-            # Botones de reproducción
-            self._connect_button(self.ui.reproduccionbtn1, self.on_reproduccionbtn1_toggled)
-            self._connect_button(self.ui.reproduccionbtn2, self.on_reproduccionbtn2_toggled)
+            # Botones de corrales
+            self._connect_button_safe(self.ui.corralesbtn1, self.on_corralesbtn1_toggled)
+            self._connect_button_safe(self.ui.corralesbtn2, self.on_corralesbtn2_toggled)
+            
+            # Botones de reportes
+            self._connect_button_safe(self.ui.reportesbtn1, self.on_reportesbtn1_toggled)
+            self._connect_button_safe(self.ui.reportesbtn2, self.on_reportesbtn2_toggled)
+            
+            # Botones de salud y reproducción (usando botones ocultos)
+            self._connect_button_safe(self.ui.seguridadbtn1, self.on_saludbtn1_toggled)
+            self._connect_button_safe(self.ui.seguridadbtn2, self.on_saludbtn2_toggled)
+            self._connect_button_safe(self.ui.bitacorabtn1, self.on_reproduccionbtn1_toggled)
+            self._connect_button_safe(self.ui.bitacorabtn2, self.on_reproduccionbtn2_toggled)
             
             # Conectar botón de cerrar sesión
-            if hasattr(self.ui, 'cerrarbtn1'):
-                self.ui.cerrarbtn1.clicked.connect(self.solicitar_cerrar_sesion)
-            if hasattr(self.ui, 'cerrarbtn2'):
-                self.ui.cerrarbtn2.clicked.connect(self.solicitar_cerrar_sesion)
+            self._connect_button_safe(self.ui.cerrarbtn1, self.solicitar_cerrar_sesion, is_clicked=True)
+            self._connect_button_safe(self.ui.cerrarbtn2, self.solicitar_cerrar_sesion, is_clicked=True)
+            
             print("✅ Todas las señales conectadas correctamente")
             
         except Exception as e:
@@ -231,12 +369,19 @@ class EMainWindow(QMainWindow):
             import traceback
             traceback.print_exc()
 
+    def _connect_button_safe(self, button, handler, is_clicked=False):
+        """Conectar botón de manera segura"""
+        if button:
+            if is_clicked:
+                button.clicked.connect(handler)
+            else:
+                button.toggled.connect(handler)
+
     def solicitar_cerrar_sesion(self):
         """Solicitar cierre de sesión de manera segura"""
         try:
             print("🔒 Solicitando cierre de sesión...")
             
-            # ✅ REGISTRAR EN BITÁCORA INTENTO DE CIERRE DE SESIÓN
             if hasattr(self, 'bitacora_controller') and self.bitacora_controller:
                 self.bitacora_controller.registrar_accion(
                     modulo="Sistema",
@@ -255,18 +400,15 @@ class EMainWindow(QMainWindow):
             if respuesta == QMessageBox.Yes:
                 print("✅ Usuario confirmó cierre de sesión")
                 
-                # ✅ REGISTRAR EN BITÁCORA CIERRE DE SESIÓN CONFIRMADO
                 if hasattr(self, 'bitacora_controller') and self.bitacora_controller:
                     self.bitacora_controller.registrar_logout(
                         self.usuario_actual.get('nombre', 'Desconocido')
                     )
                 
-                # ✅ EMITIR SEÑAL EN LUGAR DE CERRAR DIRECTAMENTE
                 self.cerrar_sesion_solicitado.emit()
             else:
                 print("❌ Usuario canceló cierre de sesión")
                 
-                # ✅ REGISTRAR EN BITÁCORA CANCELACIÓN DE CIERRE DE SESIÓN
                 if hasattr(self, 'bitacora_controller') and self.bitacora_controller:
                     self.bitacora_controller.registrar_accion(
                         modulo="Sistema",
@@ -277,137 +419,118 @@ class EMainWindow(QMainWindow):
         except Exception as e:
             print(f"❌ Error al solicitar cierre de sesión: {e}")
 
-    def _connect_button(self, button, handler):
-        """Conecta un botón de manera segura"""
-        if button:
-            button.toggled.connect(handler)
-        else:
-            print(f"⚠️ Botón no encontrado: {button}")
-
     def cambiar_pagina(self, index, button_name):
-        """Método unificado para cambiar de página - MEJORADO"""
-        print(f"🔄 Cambiando a página {index} ({button_name})")
-    
+        """Cambiar página con verificación de índice seguro"""
         try:
-            # ✅ VERIFICAR SI LA PÁGINA EXISTE ANTES DE CAMBIAR
-            if index >= self.ui.stackedWidget.count():
-                print(f"❌ Índice {index} no existe, máximo es {self.ui.stackedWidget.count()-1}")
+            max_index = self.ui.stackedWidget.count() - 1
+            if index > max_index:
+                print(f"❌ Índice {index} no existe, máximo es {max_index}")
+                QMessageBox.warning(self, "Error", f"La página {index} no está disponible")
                 return
-            
-            # ✅ REGISTRAR EN BITÁCORA LA NAVEGACIÓN
-            if hasattr(self, 'bitacora_controller') and self.bitacora_controller:
-                nombre_pagina = self.get_nombre_pagina(index)
-                self.bitacora_controller.registrar_accion(
-                    modulo="Navegación",
-                    accion="CAMBIAR_PAGINA",
-                    descripcion=f"Navegó a {nombre_pagina}",
-                    detalles=f"Desde botón: {button_name}"
-                )
-            
-            # ✅ ACTUALIZAR BOTONES DEL SIDEBAR PRIMERO
-            self.actualizar_botones_sidebar(index)
-            
-            # ✅ CAMBIAR LA PÁGINA
+        
+            self.actualizar_botones_sidebar_admin_style(index)
             self.ui.stackedWidget.setCurrentIndex(index)
-            
+            print(f"✅ Cambiando a página {index}: {button_name}")
+        
             # CARGAR DATOS SEGÚN LA PÁGINA
-            if index == 0:  # Página principal
-                if hasattr(self, 'main_controller') and self.main_controller:
-                    print("🏠 Cargando estadísticas de página principal...")
-                    self.main_controller.cargar_estadisticas()
-            elif index == 1:  # Becerros
-                if hasattr(self, 'becerros_controller') and self.becerros_controller:
-                    print("🐄 Cargando datos de becerros...")
-                    self.becerros_controller.cargar_becerros()
-            elif index == 2:  # Animales
-                if hasattr(self, 'animales_controller') and self.animales_controller:
-                    print("🐮 Cargando datos de animales...")
-                    self.animales_controller.cargar_animales()
-            elif index == 3:  # Salud
-                if hasattr(self, 'salud_controller') and self.salud_controller:
-                    print("🏥 Cargando página de salud...")
-                    self.salud_controller.cargar_datos()
-            elif index == 4:  # Reproducción
-                if hasattr(self, 'reproduccion_controller') and self.reproduccion_controller:
-                    print("🐄 Cargando página de reproducción...")
-                    self.reproduccion_controller.cargar_datos()
-                    
+            if index == 0 and hasattr(self, 'main_controller') and self.main_controller:
+                print("🏠 Cargando estadísticas de página principal...")
+                self.main_controller.cargar_estadisticas()
+            elif index == 1 and hasattr(self, 'becerros_controller') and self.becerros_controller:
+                print("🐄 Cargando datos de becerros...")
+                self.becerros_controller.cargar_becerros()
+            elif index == 2 and hasattr(self, 'animales_controller') and self.animales_controller:
+                print("🐮 Cargando datos de animales...")
+                self.animales_controller.cargar_animales()
+            elif index == 3 and hasattr(self, 'propietarios_controller') and self.propietarios_controller:
+                print("👤 Cargando datos de propietarios...")
+                self.propietarios_controller.cargar_propietarios()
+            elif index == 4 and hasattr(self, 'corrales_controller') and self.corrales_controller:
+                print("🏠 Cargando datos de corrales...")
+                self.corrales_controller.cargar_corrales()
+            elif index == 5 and hasattr(self, 'salud_controller') and self.salud_controller:
+                print("🏥 Cargando página de salud...")
+                self.salud_controller.cargar_datos()
+            elif index == 6 and hasattr(self, 'reproduccion_controller') and self.reproduccion_controller:
+                print("🐄 Cargando página de reproducción...")
+                self.reproduccion_controller.cargar_datos()
+            elif index == 7 and hasattr(self, 'reportes_controller') and self.reportes_controller:
+                print("📊 Cargando página de reportes...")
+                self.reportes_controller.cargar_datos()
+            elif index == 8 and hasattr(self, 'sbuscar_controller') and self.sbuscar_controller:
+                print("🏥 Cargando página de reportes de salud...")
+                self.sbuscar_controller.cargar_datos()
+            elif index == 9 and hasattr(self, 'rbuscar_controller') and self.rbuscar_controller:
+                print("🐄 Cargando página de reportes de reproducción...")
+                self.rbuscar_controller.cargar_datos()
+                
         except Exception as e:
             print(f"❌ Error cambiando a página {index}: {e}")
             import traceback
             traceback.print_exc()
-            
-    def actualizar_botones_sidebar(self, index):
-        """Actualizar el estado de los botones del sidebar según la página actual"""
+
+    def actualizar_botones_sidebar_admin_style(self, index):
+        """Actualizar botones del sidebar"""
         try:
             print(f"🔘 Actualizando botones del sidebar para la página {index}...")
             
-            # Desmarcar todos los botones primero
             botones = [
                 self.ui.indexbtn1, self.ui.indexbtn2,
                 self.ui.becerrosbtn1, self.ui.becerrosbtn2,
                 self.ui.animalesbtn1, self.ui.animalesbtn2,
-                self.ui.saludbtn1, self.ui.saludbtn2,
-                self.ui.reproduccionbtn1, self.ui.reproduccionbtn2
+                self.ui.propietariosbtn1, self.ui.propietariosbtn2,
+                self.ui.corralesbtn1, self.ui.corralesbtn2,
+                self.ui.bitacorabtn1, self.ui.bitacorabtn2,
+                self.ui.reportesbtn1, self.ui.reportesbtn2,
+                self.ui.seguridadbtn1, self.ui.seguridadbtn2
             ]
             
             for btn in botones:
                 if btn:
-                    # Usar blockSignals para evitar bucles infinitos
                     btn.blockSignals(True)
                     btn.setChecked(False)
                     btn.blockSignals(False)
             
             # Marcar el botón correspondiente según el índice
             if index == 0:  # Página principal
-                if self.ui.indexbtn1:
-                    self.ui.indexbtn1.blockSignals(True)
-                    self.ui.indexbtn1.setChecked(True)
-                    self.ui.indexbtn1.blockSignals(False)
-                if self.ui.indexbtn2:
-                    self.ui.indexbtn2.blockSignals(True)
-                    self.ui.indexbtn2.setChecked(True)
-                    self.ui.indexbtn2.blockSignals(False)
+                self.marcar_boton_safe(self.ui.indexbtn1)
+                self.marcar_boton_safe(self.ui.indexbtn2)
                     
             elif index == 1:  # Becerros
-                if self.ui.becerrosbtn1:
-                    self.ui.becerrosbtn1.blockSignals(True)
-                    self.ui.becerrosbtn1.setChecked(True)
-                    self.ui.becerrosbtn1.blockSignals(False)
-                if self.ui.becerrosbtn2:
-                    self.ui.becerrosbtn2.blockSignals(True)
-                    self.ui.becerrosbtn2.setChecked(True)
-                    self.ui.becerrosbtn2.blockSignals(False)
+                self.marcar_boton_safe(self.ui.becerrosbtn1)
+                self.marcar_boton_safe(self.ui.becerrosbtn2)
                     
             elif index == 2:  # Animales
-                if self.ui.animalesbtn1:
-                    self.ui.animalesbtn1.blockSignals(True)
-                    self.ui.animalesbtn1.setChecked(True)
-                    self.ui.animalesbtn1.blockSignals(False)
-                if self.ui.animalesbtn2:
-                    self.ui.animalesbtn2.blockSignals(True)
-                    self.ui.animalesbtn2.setChecked(True)
-                    self.ui.animalesbtn2.blockSignals(False)
+                self.marcar_boton_safe(self.ui.animalesbtn1)
+                self.marcar_boton_safe(self.ui.animalesbtn2)
                     
-            elif index == 3:  # Salud
-                if self.ui.saludbtn1:
-                    self.ui.saludbtn1.blockSignals(True)
-                    self.ui.saludbtn1.setChecked(True)
-                    self.ui.saludbtn1.blockSignals(False)
-                if self.ui.saludbtn2:
-                    self.ui.saludbtn2.blockSignals(True)
-                    self.ui.saludbtn2.setChecked(True)
-                    self.ui.saludbtn2.blockSignals(False)
+            elif index == 3:  # Propietarios
+                self.marcar_boton_safe(self.ui.propietariosbtn1)
+                self.marcar_boton_safe(self.ui.propietariosbtn2)
                     
-            elif index == 4:  # Reproducción
-                if self.ui.reproduccionbtn1:
-                    self.ui.reproduccionbtn1.blockSignals(True)
-                    self.ui.reproduccionbtn1.setChecked(True)
-                    self.ui.reproduccionbtn1.blockSignals(False)
-                if self.ui.reproduccionbtn2:
-                    self.ui.reproduccionbtn2.blockSignals(True)
-                    self.ui.reproduccionbtn2.setChecked(True)
-                    self.ui.reproduccionbtn2.blockSignals(False)
+            elif index == 4:  # Corrales
+                self.marcar_boton_safe(self.ui.corralesbtn1)
+                self.marcar_boton_safe(self.ui.corralesbtn2)
+                    
+            elif index == 5:  # Salud (usa botones de seguridad)
+                self.marcar_boton_safe(self.ui.seguridadbtn1)
+                self.marcar_boton_safe(self.ui.seguridadbtn2)
+                    
+            elif index == 6:  # Reproducción (usa botones de bitácora)
+                self.marcar_boton_safe(self.ui.bitacorabtn1)
+                self.marcar_boton_safe(self.ui.bitacorabtn2)
+                    
+            elif index == 7:  # Reportes
+                self.marcar_boton_safe(self.ui.reportesbtn1)
+                self.marcar_boton_safe(self.ui.reportesbtn2)
+                    
+            elif index == 8:  # Reportes de Salud
+                self.marcar_boton_safe(self.ui.reportesbtn1)
+                self.marcar_boton_safe(self.ui.reportesbtn2)
+                    
+            elif index == 9:  # Reportes de Reproducción
+                self.marcar_boton_safe(self.ui.reportesbtn1)
+                self.marcar_boton_safe(self.ui.reportesbtn2)
             
             print("✅ Botones del sidebar actualizados correctamente")
             
@@ -415,6 +538,13 @@ class EMainWindow(QMainWindow):
             print(f"❌ Error actualizando botones del sidebar: {e}")
             import traceback
             traceback.print_exc()
+
+    def marcar_boton_safe(self, boton):
+        """Marca un botón de manera segura si existe"""
+        if boton:
+            boton.blockSignals(True)
+            boton.setChecked(True)
+            boton.blockSignals(False)
 
     # ========== MÉTODOS PARA CADA BOTÓN ==========
     
@@ -442,27 +572,71 @@ class EMainWindow(QMainWindow):
         if checked:
             self.cambiar_pagina(2, "Animales")
 
+    def on_propietariosbtn1_toggled(self, checked):
+        if checked:
+            self.cambiar_pagina(3, "Propietarios")
+
+    def on_propietariosbtn2_toggled(self, checked):
+        if checked:
+            self.cambiar_pagina(3, "Propietarios")
+
+    def on_corralesbtn1_toggled(self, checked):
+        if checked:
+            self.cambiar_pagina(4, "Corrales")
+
+    def on_corralesbtn2_toggled(self, checked):
+        if checked:
+            self.cambiar_pagina(4, "Corrales")
+
+    def on_reportesbtn1_toggled(self, checked):
+        if checked:
+            self.cambiar_pagina(7, "Reportes")
+
+    def on_reportesbtn2_toggled(self, checked):
+        if checked:
+            self.cambiar_pagina(7, "Reportes")
+
     def on_saludbtn1_toggled(self, checked):
         if checked:
-            self.cambiar_pagina(3, "Salud")
+            self.cambiar_pagina(5, "Salud")
 
     def on_saludbtn2_toggled(self, checked):
         if checked:
-            self.cambiar_pagina(3, "Salud")
+            self.cambiar_pagina(5, "Salud")
 
     def on_reproduccionbtn1_toggled(self, checked):
         if checked:
-            self.cambiar_pagina(4, "Reproducción")
+            self.cambiar_pagina(6, "Reproducción")
 
     def on_reproduccionbtn2_toggled(self, checked):
         if checked:
-            self.cambiar_pagina(4, "Reproducción")
+            self.cambiar_pagina(6, "Reproducción")
+
+    def set_usuario_actual(self, usuario_actual):
+        """Establecer usuario actual y crear controlador de bitácora"""
+        self.usuario_actual = usuario_actual
+        
+        try:
+            bitacora_widget = QWidget()
+            self.bitacora_ui = Ui_BitacoraPage()
+            self.bitacora_ui.setupUi(bitacora_widget)
+            
+            self.bitacora_controller = BitacoraController(
+                ui=self.bitacora_ui,
+                db=Database(),
+                usuario_actual=self.usuario_actual
+            )
+            print("✅ Controlador de bitácora creado para empleado")
+            
+            self.compartir_bitacora_controller()
+            
+        except Exception as e:
+            print(f"❌ Error creando controlador de bitácora: {e}")
 
     def closeEvent(self, event):
         """Maneja el cierre de la ventana"""
         print("🔴 Cerrando aplicación empleado...")
         
-        # ✅ REGISTRAR EN BITÁCORA EL CIERRE DE LA APLICACIÓN
         if hasattr(self, 'bitacora_controller') and self.bitacora_controller:
             self.bitacora_controller.registrar_accion(
                 modulo="Sistema",
@@ -470,18 +644,11 @@ class EMainWindow(QMainWindow):
                 descripcion="Cerró la aplicación"
             )
         
-        # ✅ LIMPIAR RECURSOS DE TODOS LOS CONTROLADORES
-        if hasattr(self, 'main_controller') and self.main_controller:
-            self.main_controller.limpiar_recursos()
-            
-        if hasattr(self, 'becerros_controller') and self.becerros_controller and self.becerros_controller.db:
-            self.becerros_controller.db.disconnect()
-        if hasattr(self, 'animales_controller') and self.animales_controller and self.animales_controller.db:
-            self.animales_controller.db.disconnect()
-            
-        # Limpiar recursos de todos los controladores
         controllers = [
-            'bitacora_controller', 'salud_controller', 'reproduccion_controller'
+            'main_controller', 'becerros_controller', 'animales_controller',
+            'propietarios_controller', 'corrales_controller', 'salud_controller',
+            'reproduccion_controller', 'reportes_controller', 'sbuscar_controller',
+            'rbuscar_controller', 'bitacora_controller'
         ]
         
         for controller_name in controllers:
@@ -489,6 +656,8 @@ class EMainWindow(QMainWindow):
                 controller = getattr(self, controller_name)
                 if hasattr(controller, 'limpiar_recursos'):
                     controller.limpiar_recursos()
+                elif hasattr(controller, 'db') and controller.db:
+                    controller.db.disconnect()
             
         event.accept()
 
@@ -496,11 +665,9 @@ class EMainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     
-    # Configurar la aplicación
     app.setApplicationName("SDLG - Sistema de Gestión Ganadera (Empleado)")
     app.setApplicationVersion("1.0")
     
-    # Crear y mostrar ventana principal
     window = EMainWindow()
     window.show()
     
@@ -509,10 +676,14 @@ def main():
     print("   🏠  Índice 0: Página Principal")
     print("   🐄  Índice 1: Becerros") 
     print("   🐮  Índice 2: Animales")
-    print("   🏥  Índice 3: Salud")
-    print("   🐄  Índice 4: Reproducción")
+    print("   👤  Índice 3: Propietarios")
+    print("   🏠  Índice 4: Corrales")
+    print("   🏥  Índice 5: Salud")
+    print("   🐄  Índice 6: Reproducción")
+    print("   📊  Índice 7: Reportes")
+    print("   🏥  Índice 8: Reportes de Salud")
+    print("   🐄  Índice 9: Reportes de Reproducción")
     
-    # Ejecutar aplicación
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

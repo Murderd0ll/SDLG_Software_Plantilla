@@ -383,7 +383,7 @@ class UsuariosController:
             if self.buscador:
                 texto = self.buscador.text().strip()
                 if texto:
-                    usuarios = self.db.buscar_usuarios_por_nombre(texto)
+                    usuarios = self.db.buscar_usuarios_en_todos_los_campos(texto)
                 else:
                     usuarios = self.db.obtener_usuarios()
                 self.llenar_tabla(usuarios)
